@@ -1,8 +1,8 @@
 {
-  "name": "react-tela-mac",
+  "name": "etiquetas",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/TelaInicial",
+  "homepage": "/etiquetas",
   "dependencies": {
     "@chakra-ui/react": "^3.16.1",
     "@emotion/react": "^11.14.0",
