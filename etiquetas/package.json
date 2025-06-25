@@ -24,6 +24,7 @@
     "jspdf": "^3.0.1",
     "leaflet": "^1.9.4",
     "mssql": "^11.0.1",
+    "pdf-lib": "^1.17.1",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^19.0.0",
