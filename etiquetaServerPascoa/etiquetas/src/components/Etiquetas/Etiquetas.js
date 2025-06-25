@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
-import jsPDF from "jspdf";
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 function formatarData(dataISO) {
   if (!dataISO) return '';
@@ -12,8 +12,15 @@ function formatarProduto(str) {
   if (!str) return '';
   return str
     .normalize("NFD")
+     // eslint-disable-next-line no-control-regex
     .replace(/\u0000/g, '').trim();
 }
+
+function normalizarTexto(texto) {
+  // Remove acentos combinados, deixando apenas o caractere base ou acentuado simples
+  return texto ? texto.normalize("NFC") : '';
+}
+
 
 const Etiquetas = () => {
   // Função para obter a data de hoje no formato yyyy-mm-dd
@@ -30,7 +37,8 @@ const Etiquetas = () => {
   ]);
   const [quantidadeEtiquetas, setQuantidadeEtiquetas] = useState(1);
   const [produtos, setProdutos] = useState([]);
-  const [validade, setValidade] = useState([]);
+  const [mostrarObs, setMostrarObs] = useState(true);
+  const [setor, setSetor] = useState("");
 
   useEffect(() => {
     fetch('http://192.168.1.250/server-pascoa/api/produtos')
@@ -45,16 +53,36 @@ const Etiquetas = () => {
     setEtiquetas(novasEtiquetas);
   };
 
-  // Gera etiquetas em PDF para impressão
-  const gerarImpressao = () => {
-    // Cria PDF com tamanho padrão (A4 landscape)
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "mm"
-    });
+  // Função para quebrar texto em várias linhas (simples)
+  function splitTextToSize(text, maxLen) {
+    if (!text) return [''];
+    const words = text.split(' ');
+    let lines = [];
+    let current = '';
+    for (let word of words) {
+      if ((current + ' ' + word).trim().length > maxLen) {
+        lines.push(current.trim());
+        current = word;
+      } else {
+        current += ' ' + word;
+      }
+    }
+    if (current) lines.push(current.trim());
+    return lines;
+  }
+
+  // Gera etiquetas em PDF para impressão usando pdf-lib
+  const gerarImpressao = async () => {
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+    const fontSize = 10;
+    const pageWidth = 297; // A4 landscape mm
+    const pageHeight = 210;
 
     for (let copia = 0; copia < quantidadeEtiquetas; copia++) {
-      if (copia > 0) doc.addPage();
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      let y = pageHeight - 10; // Começa do topo
+      const left = 10;
 
       const data = new Date();
       let dia = data.getDate();
@@ -79,39 +107,62 @@ const Etiquetas = () => {
       const validadeFormatada = `${String(dataValidade.getDate()).padStart(2, '0')}/${String(dataValidade.getMonth() + 1).padStart(2, '0')}/${dataValidade.getFullYear()}`;
       const conservacao = etiquetas[0].conservacao || "";
 
-      // fonte e tamanho para caber na etiqueta (fonte menor)
-      let y = 6;
-      doc.setFont("Arial", "normal");
-      doc.setFontSize(10);
-      doc.text(`Produto:`, 5, y);
-      doc.setFont("Arial", "normal");
-      doc.text(doc.splitTextToSize(etiquetas[0].nome || '', 80), 18, y);
-      y += 5;
-      doc.setFont("Arial", "normal");
-      doc.text(`Fab.: ${formatarData(etiquetas[0].fab) || ''}`, 5, y);
-      y += 4;
-      doc.text(`Val.: ${validadeFormatada || ''}`, 5, y);
-      y += 4;
-      doc.text(doc.splitTextToSize(`(${conservacao === "Congelado" ? "X" : "  "}) Congelado <0ºC a – 18 ºC`, 80), 5, y);
-      y += 4;
-      doc.text(doc.splitTextToSize(`(${conservacao === "Refrigerado" ? "X" : "  "}) Resfriado 0ºC a 10ºC`, 80), 5, y);
-      y += 4;
-      doc.text(doc.splitTextToSize(`(${conservacao === "Ambiente" ? "X" : "  "}) Ambiente`, 80), 5, y);
-      y += 4;
-      doc.setFont("Arial", "bold");
-      doc.text(doc.splitTextToSize("OBS: Regenerar em forno. Consumo imediato", 80), 5, y);
+      // Produto
+      page.drawText(normalizarTexto('Produto:'), { x: left, y, size: fontSize, font });
+      // Quebra de linha automática para o nome do produto
+      const nomeProdutoLines = splitTextToSize(normalizarTexto(etiquetas[0].nome) || '', 40); // ajuste 35 conforme largura da etiqueta
+      let yProduto = y;
+      for (let line of nomeProdutoLines) {
+        page.drawText(line, { x: left + 40, y: yProduto, size: fontSize, font });
+        yProduto -= 12; // mesmo espaçamento das outras linhas
+      }
+      
+      y -= 16 + (nomeProdutoLines.length - 1) * 8; // ajusta y para as próximas linhas
+      // Fabricação
+      page.drawText(normalizarTexto(`Fab.: ${formatarData(etiquetas[0].fab) || ''}`), { x: left, y, size: fontSize, font });
+      y -= 12;
+      // Validade
+      page.drawText(normalizarTexto(`Val.: ${validadeFormatada || ''}`), { x: left, y, size: fontSize, font });
+      y -= 12;
+      // Conservação
+      const linhasCons = [
+        normalizarTexto(`(${conservacao === "Congelado" ? "X" : "  "}) Congelado <0ºC a – 18 ºC`),
+        normalizarTexto(`(${conservacao === "Refrigerado" ? "X" : "  "}) Resfriado 0ºC a 10ºC`),
+        normalizarTexto(`(${conservacao === "Ambiente" ? "X" : "  "}) Ambiente`)
+      ];
+      for (let linha of linhasCons) {
+        page.drawText(linha, { x: left, y, size: fontSize, font });
+        y -= 12;
+      }
+      // Observação ou setor
+      if (mostrarObs) {
+        const obsLines = splitTextToSize(normalizarTexto("OBS: Regenerar em forno. Consumo imediato"), 60);
+        for (let linha of obsLines) {
+          page.drawText(linha, { x: left, y, size: fontSize, font });
+          y -= 12;
+        }
+      } else if (setor) {
+        const setorLines = splitTextToSize(normalizarTexto(setor), 60);
+        for (let linha of setorLines) {
+          page.drawText(linha, { x: left, y, size: fontSize, font });
+          y -= 12;
+        }
+      }
     }
 
     // Abrir PDF em nova aba para impressão
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const pdfUrl = URL.createObjectURL(blob);
     const printWindow = window.open(pdfUrl);
-    // Aguarda o PDF carregar antes de chamar print
-    printWindow.onload = function() {
-      printWindow.focus();
-      printWindow.print();
-    };
+    if (printWindow) {
+      printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+      };
+    }
   };
+
   return (
     <div className="container mt-4">
       <h2>Preencher Etiquetas</h2>
@@ -160,6 +211,28 @@ const Etiquetas = () => {
         onChange={e => setQuantidadeEtiquetas(Number(e.target.value))}
         />
       <br></br>
+      <div className="mb-3">
+        <input
+          type="checkbox"
+          id="mostrarObs"
+          checked={mostrarObs}
+          onChange={e => setMostrarObs(e.target.checked)}
+        />
+        <label htmlFor="mostrarObs" className="ms-2">Exibir OBS: Regenerar em forno. Consumo imediato</label>
+      </div>
+      {!mostrarObs && (
+        <div className="mb-3">
+          <label htmlFor="setor">Setor:</label>
+          <input
+            type="text"
+            id="setor"
+            className="form-control"
+            value={setor}
+            onChange={e => setSetor(e.target.value)}
+            placeholder="Digite o setor"
+          />
+        </div>
+      )}
       <Button variant="primary" onClick={gerarImpressao}>Imprimir etiquetas</Button>
     </div>
   );
