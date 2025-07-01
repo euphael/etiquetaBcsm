@@ -14,7 +14,14 @@ const App = () => {
       <div className="App">
         <Router>
           <Routes>
+<<<<<<< HEAD
             <Route path="/etiquetas" element={<Etiquetas />}>
+=======
+            <Route path="etiquetas" element={<Etiquetas />} 
+            >
+            <Route path="etiquetasLoja" element={<EtiquetasLoja />}
+            />
+>>>>>>> 1f974d1f34fc88cab82344e696d0e30b1694f93f
             </Route>
               <Route path="/etiquetasLoja" element={<EtiquetasLoja />}/>
           </Routes>
