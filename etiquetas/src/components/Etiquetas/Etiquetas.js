@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-
 function formatarData(dataISO) {
   if (!dataISO) return '';
   const [ano, mes, dia] = dataISO.split('-');
@@ -17,11 +16,11 @@ function formatarProduto(str) {
     .replace(/\u0000/g, '').trim();
 }
 
+
 function normalizarTexto(texto) {
   // Remove acentos combinados, deixando apenas o caractere base ou acentuado simples
   return texto ? texto.normalize("NFC") : '';
 }
-
 
 const Etiquetas = () => {
   // Função para obter a data de hoje no formato yyyy-mm-dd
@@ -39,6 +38,8 @@ const Etiquetas = () => {
   const [quantidadeEtiquetas, setQuantidadeEtiquetas] = useState(1);
   const [produtos, setProdutos] = useState([]);
   const [mostrarObs, setMostrarObs] = useState(true);
+  const [mostrarValidade, setMostrarValidade ] = useState(true);
+  const [validade, setValidade] = useState("");
   const [setor, setSetor] = useState("");
 
   useEffect(() => {
@@ -123,8 +124,13 @@ const Etiquetas = () => {
       page.drawText(normalizarTexto(`Fab.: ${formatarData(etiquetas[0].fab) || ''}`), { x: left, y, size: fontSize, font });
       y -= 12;
       // Validade
-      page.drawText(normalizarTexto(`Val.: ${validadeFormatada || ''}`), { x: left, y, size: fontSize, font });
-      y -= 12;
+      if(mostrarValidade) {
+        page.drawText(normalizarTexto(`Val.: ${validadeFormatada || ''}`), { x: left, y, size: fontSize, font });
+        y -= 12;
+      } else {
+        page.drawText(normalizarTexto(`Val.: ${formatarData(validade) || ''}`), { x: left, y, size: fontSize, font });
+        y -= 12;
+      }
       // Conservação
       const linhasCons = [
         normalizarTexto(`(${conservacao === "Congelado" ? "X" : "  "}) Congelado <0ºC a – 18 ºC`),
@@ -190,6 +196,7 @@ const Etiquetas = () => {
             onChange={e => handleChange(idx, 'fab', e.target.value)}
             className="form-control me-2"
           />
+          
         <select
           value={etiqueta.conservacao || ''}
           onChange={e => handleChange(idx, 'conservacao', e.target.value)}
@@ -202,6 +209,28 @@ const Etiquetas = () => {
         </select>
         </div>
       ))}
+
+      <input
+            type="checkbox"
+            id="mostrarValidade"
+            checked={mostrarValidade}
+            onChange={e => setMostrarValidade(e.target.checked)}
+        />
+        <label htmlFor="mostrarValidade" className="ms-2">Incluir validade automática?</label>
+        {!mostrarValidade && (
+        <div className="mb-3">
+          <label htmlFor="setor">Validade:</label>
+          <input
+            type="date"
+            id="validade"
+            className="form-control"
+            value={validade}
+            onChange={e => setValidade(e.target.value)}
+          />
+        </div>
+      )}
+
+      <br></br>
       <label htmlFor="quantidadeEtiquetas">Quantidade de etiquetas:</label>
       <input
         type="number"
