@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
+
 function formatarData(dataISO) {
   if (!dataISO) return '';
   const [ano, mes, dia] = dataISO.split('-');

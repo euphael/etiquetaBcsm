@@ -4,8 +4,6 @@ import jsPDF from "jspdf";
 import axios from 'axios';
 import Select from 'react-select';
 
-
-
 function formatarProduto(str) {
   if (!str) return '';
   return str
