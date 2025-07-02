@@ -240,7 +240,7 @@ const EtiquetasLoja = () => {
       return;
     }
 
-    axios.delete(`http://192.168.1.168:4000/etiquetas/${itemSelecionado.id}`)
+    axios.delete(`http://192.168.1.250/server-pascoa/etiquetas/${itemSelecionado.id}`)
       .then((response) => {
         console.log('Etiqueta excluída com sucesso:', response.data);
 
@@ -291,7 +291,7 @@ const EtiquetasLoja = () => {
 
 
   const buscarProdutos = () => {
-    axios.get('http://192.168.1.168:4000/etiquetas')
+    axios.get('http://192.168.1.250/server-pascoa/etiquetas')
       .then(response => {
         setProdutos(response.data.etiquetas);
       })
@@ -497,7 +497,7 @@ const EtiquetasLoja = () => {
     };
 
     // Enviando os dados para o backend (servidor Node.js)
-    axios.post('http://192.168.1.168:4000/etiquetas', novoProduto)
+    axios.post('http://192.168.1.250/server-pascoa/etiquetas', novoProduto)
       .then(response => {
         console.log('Produto criado com sucesso:', response.data);
         alert('Produto criado com sucesso!');
@@ -624,7 +624,7 @@ const EtiquetasLoja = () => {
 
     // Enviar os dados para o servidor usando a rota PUT
     axios
-      .put(`http://192.168.1.168:4000/etiquetas/${itemSelecionado.id}`, produtoEditado)
+      .put(`http://192.168.1.250/server-pascoa/etiquetas/${itemSelecionado.id}`, produtoEditado)
       .then((response) => {
         console.log('Produto atualizado com sucesso:', response.data);
         alert('Produto atualizado com sucesso!');
