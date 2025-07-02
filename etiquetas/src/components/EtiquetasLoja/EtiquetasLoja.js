@@ -3,7 +3,8 @@ import Button from 'react-bootstrap/Button';
 import jsPDF from "jspdf";
 import axios from 'axios';
 import Select from 'react-select';
-import { useNavigate } from 'react-router-dom';
+import { isCookie, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 
 function formatarProduto(str) {
@@ -111,9 +112,8 @@ const EtiquetasLoja = () => {
   useEffect(() => {
     const tokenEsperado = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNCIsImVtYWlsIjoidXNlckBxdWFsaWRhZGUiLCJ1c2VybmFtZSI6InF1YWxpZGFkZSIsInJvbGUiOiJxdWFsaWRhZGUiLCJleHAiOjE3NTE0NzI3MzEsImlzcyI6InlvdXJfYXBwIiwiYXVkIjoieW91cl91c2VycyJ9.WWHIEswrZZ9kDH_uFaPsV14LGOo9R0Z52IjrQ_IVLDg";
 
-    const tokenArmazenado = localStorage.getItem("token");
-
-    if (tokenArmazenado === tokenEsperado) {
+    const token = Cookies.get("token");
+    if (token === tokenEsperado) {
       setIsLoggedIn(true);
     } else {
       setIsLoggedIn(false);
@@ -737,8 +737,8 @@ const EtiquetasLoja = () => {
           <Button
             onClick={() => {
               if (isLoggedIn) {
+                Cookies.remove("token"); // Remove o cookie chamado "token"
                 setIsLoggedIn(false);
-                alert('Você foi deslogado.');
               } else {
                 navigate('/');
               }
