@@ -740,7 +740,7 @@ const EtiquetasLoja = () => {
                 Cookies.remove("token"); // Remove o cookie chamado "token"
                 setIsLoggedIn(false);
               } else {
-                navigate('/');
+                window.location.href = 'http://192.168.1.250/';
               }
             }}
             className="mb-3"
