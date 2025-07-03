@@ -112,8 +112,9 @@ const EtiquetasLoja = () => {
 
   useEffect(() => {
     const token = Cookies.get('token'); // Recupera o token do cookie
-
-    if (token && typeof token === 'string') {
+    
+    debugger
+    if (token) {
       try {
         const decoded = jwtDecode(token);
         console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
@@ -123,7 +124,12 @@ const EtiquetasLoja = () => {
         if (isExpired) {
           setIsLoggedIn(false);
         } else {
-          setIsLoggedIn(true);
+          if (decoded.username=== 'qualidade'||'admin'){
+            setIsLoggedIn(true);
+          }
+          else{
+            setIsLoggedIn(false)
+          }
         }
       } catch (error) {
         console.error('Erro ao decodificar o token:', error);
