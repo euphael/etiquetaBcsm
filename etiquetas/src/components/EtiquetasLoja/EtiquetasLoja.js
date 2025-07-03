@@ -113,7 +113,6 @@ const EtiquetasLoja = () => {
   useEffect(() => {
     const token = Cookies.get('token'); // Recupera o token do cookie
     
-    debugger
     if (token) {
       try {
         const decoded = jwtDecode(token);
