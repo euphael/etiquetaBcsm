@@ -144,55 +144,61 @@ const EtiquetasLoja = () => {
 
 
   const validarCamposObrigatorios = () => {
-    const novosErros = {};
+  const novosErros = {};
 
-    if (!produto) novosErros.produto = true;
-    if (!porcao) novosErros.porcao = true;
-    if (!caseira) novosErros.caseira = true;
-    if (!energia100g) novosErros.energia100g = true;
-    if (!energiag) novosErros.energiag = true;
-    if (!energiaVD) novosErros.energiaVD = true;
-    if (!carb100g) novosErros.carb100g = true;
-    if (!carbg) novosErros.carbg = true;
-    if (!carbVD) novosErros.carbVD = true;
-    if (!acucar100g) novosErros.acucar100g = true;
-    if (!acucarg) novosErros.acucarg = true;
-    if (!acucarVD) novosErros.acucarVD = true;
-    if (!acucarad100g) novosErros.acucarad100g = true;
-    if (!acucaradg) novosErros.acucaradg = true;
-    if (!acucaradVD) novosErros.acucaradVD = true;
-    if (!proteina100g) novosErros.proteina100g = true;
-    if (!proteinag) novosErros.proteinag = true;
-    if (!proteinaVD) novosErros.proteinaVD = true;
-    if (!gorduraTotal100g) novosErros.gorduraTotal100g = true;
-    if (!gorduraTotalg) novosErros.gorduraTotalg = true;
-    if (!gorduraTotalVD) novosErros.gorduraTotalVD = true;
-    if (!gorduraSaturada100g) novosErros.gorduraSaturada100g = true;
-    if (!gorduraSaturadag) novosErros.gorduraSaturadag = true;
-    if (!gorduraSaturadaVD) novosErros.gorduraSaturadaVD = true;
-    if (!gorduraTrans100g) novosErros.gorduraTrans100g = true;
-    if (!gorduraTransg) novosErros.gorduraTransg = true;
-    if (!gorduraTransVD) novosErros.gorduraTransVD = true;
-    if (!fibra100g) novosErros.fibra100g = true;
-    if (!fibrag) novosErros.fibrag = true;
-    if (!fibraVD) novosErros.fibraVD = true;
-    if (!sodio100g) novosErros.sodio100g = true;
-    if (!sodiog) novosErros.sodiog = true;
-    if (!sodioVD) novosErros.sodioVD = true;
-    if (!ingredientes) novosErros.ingredientes = true;
-    if (!valoresReferencia) novosErros.valoresReferencia = true;
-    if (!armazenamento) novosErros.armazenamento = true;
-    if (!alergenicos) novosErros.alergenicos = true;
-    if (!glutem) novosErros.glutem = true;
-    if (!lactose) novosErros.lactose = true;
-    if (!quantidade) novosErros.quantidade = true;
-    if (!valorQuant) novosErros.valorQuant = true;
-    if (!valorTotal) novosErros.valorTotal = true;
-    if (!validade) novosErros.validade = true;
-
-    setErros(novosErros);
-    return Object.keys(novosErros).length === 0;
+  const isFieldValid = (value) => {
+    return value !== null && value !== undefined && value !== '';  // Permite 0 como valor válido
   };
+
+  // Verificar todos os campos
+  if (!isFieldValid(produto)) novosErros.produto = true;
+  if (!isFieldValid(porcao)) novosErros.porcao = true;
+  if (!isFieldValid(caseira)) novosErros.caseira = true;
+  if (!isFieldValid(energia100g)) novosErros.energia100g = true;
+  if (!isFieldValid(energiag)) novosErros.energiag = true;
+  if (!isFieldValid(energiaVD)) novosErros.energiaVD = true;
+  if (!isFieldValid(carb100g)) novosErros.carb100g = true;
+  if (!isFieldValid(carbg)) novosErros.carbg = true;
+  if (!isFieldValid(carbVD)) novosErros.carbVD = true;
+  if (!isFieldValid(acucar100g)) novosErros.acucar100g = true;
+  if (!isFieldValid(acucarg)) novosErros.acucarg = true;
+  if (!isFieldValid(acucarVD)) novosErros.acucarVD = true;
+  if (!isFieldValid(acucarad100g)) novosErros.acucarad100g = true;
+  if (!isFieldValid(acucaradg)) novosErros.acucaradg = true;
+  if (!isFieldValid(acucaradVD)) novosErros.acucaradVD = true;
+  if (!isFieldValid(proteina100g)) novosErros.proteina100g = true;
+  if (!isFieldValid(proteinag)) novosErros.proteinag = true;
+  if (!isFieldValid(proteinaVD)) novosErros.proteinaVD = true;
+  if (!isFieldValid(gorduraTotal100g)) novosErros.gorduraTotal100g = true;
+  if (!isFieldValid(gorduraTotalg)) novosErros.gorduraTotalg = true;
+  if (!isFieldValid(gorduraTotalVD)) novosErros.gorduraTotalVD = true;
+  if (!isFieldValid(gorduraSaturada100g)) novosErros.gorduraSaturada100g = true;
+  if (!isFieldValid(gorduraSaturadag)) novosErros.gorduraSaturadag = true;
+  if (!isFieldValid(gorduraSaturadaVD)) novosErros.gorduraSaturadaVD = true;
+  if (!isFieldValid(gorduraTrans100g)) novosErros.gorduraTrans100g = true;
+  if (!isFieldValid(gorduraTransg)) novosErros.gorduraTransg = true;
+  if (!isFieldValid(gorduraTransVD)) novosErros.gorduraTransVD = true;
+  if (!isFieldValid(fibra100g)) novosErros.fibra100g = true;
+  if (!isFieldValid(fibrag)) novosErros.fibrag = true;
+  if (!isFieldValid(fibraVD)) novosErros.fibraVD = true;
+  if (!isFieldValid(sodio100g)) novosErros.sodio100g = true;
+  if (!isFieldValid(sodiog)) novosErros.sodiog = true;
+  if (!isFieldValid(sodioVD)) novosErros.sodioVD = true;
+  if (!isFieldValid(ingredientes)) novosErros.ingredientes = true;
+  if (!isFieldValid(valoresReferencia)) novosErros.valoresReferencia = true;
+  if (!isFieldValid(armazenamento)) novosErros.armazenamento = true;
+  if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
+  if (!isFieldValid(glutem)) novosErros.glutem = true;
+  if (!isFieldValid(lactose)) novosErros.lactose = true;
+  if (!isFieldValid(quantidade)) novosErros.quantidade = true;
+  if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
+  if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
+  if (!isFieldValid(validade)) novosErros.validade = true;
+
+  setErros(novosErros);
+  return Object.keys(novosErros).length === 0;
+};
+
 
 
   const opcoesProdutos = produtos.map(produto => ({
