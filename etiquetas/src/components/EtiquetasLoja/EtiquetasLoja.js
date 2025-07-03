@@ -111,7 +111,6 @@ const EtiquetasLoja = () => {
 
   useEffect(() => {
     const tokenEsperado = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNCIsImVtYWlsIjoidXNlckBxdWFsaWRhZGUiLCJ1c2VybmFtZSI6InF1YWxpZGFkZSIsInJvbGUiOiJxdWFsaWRhZGUiLCJleHAiOjE3NTE0NzI3MzEsImlzcyI6InlvdXJfYXBwIiwiYXVkIjoieW91cl91c2VycyJ9.WWHIEswrZZ9kDH_uFaPsV14LGOo9R0Z52IjrQ_IVLDg";
-
     const token = Cookies.get("token");
     if (token === tokenEsperado) {
       setIsLoggedIn(true);
@@ -740,7 +739,7 @@ const EtiquetasLoja = () => {
                 Cookies.remove("token"); // Remove o cookie chamado "token"
                 setIsLoggedIn(false);
               } else {
-                window.location.href = 'http://192.168.1.250/';
+                window.location.href = '/';
               }
             }}
             className="mb-3"
