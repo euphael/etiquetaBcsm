@@ -5,6 +5,7 @@ import axios from 'axios';
 import Select from 'react-select';
 import { isCookie, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
 
 
 function formatarProduto(str) {
@@ -103,19 +104,32 @@ const EtiquetasLoja = () => {
   const [validade, setValidade] = useState('');
 
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [erros, setErros] = useState({});
   // Token esperado
 
 
   useEffect(() => {
-    const tokenEsperado = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNCIsImVtYWlsIjoidXNlckBxdWFsaWRhZGUiLCJ1c2VybmFtZSI6InF1YWxpZGFkZSIsInJvbGUiOiJxdWFsaWRhZGUiLCJleHAiOjE3NTE0NzI3MzEsImlzcyI6InlvdXJfYXBwIiwiYXVkIjoieW91cl91c2VycyJ9.WWHIEswrZZ9kDH_uFaPsV14LGOo9R0Z52IjrQ_IVLDg";
-    const token = Cookies.get("token");
-    if (token === tokenEsperado) {
-      setIsLoggedIn(true);
+    const token = Cookies.get('token'); // Recupera o token do cookie
+
+    if (token && typeof token === 'string') {
+      try {
+        const decoded = jwtDecode(token);
+        console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
+
+        // Verifique se o token está expirado
+        const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
+        if (isExpired) {
+          setIsLoggedIn(false);
+        } else {
+          setIsLoggedIn(true);
+        }
+      } catch (error) {
+        console.error('Erro ao decodificar o token:', error);
+      }
     } else {
-      setIsLoggedIn(false);
+          setIsLoggedIn(false);
     }
   }, []);
 
