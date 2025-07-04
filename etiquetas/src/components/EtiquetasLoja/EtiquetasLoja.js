@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import jsPDF from "jspdf";
 import axios from 'axios';
@@ -6,6 +6,9 @@ import Select from 'react-select';
 import { isCookie, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 
 function formatarProduto(str) {
@@ -105,99 +108,99 @@ const EtiquetasLoja = () => {
   const [validade, setValidade] = useState('');
 
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
   const [erros, setErros] = useState({});
   // Token esperado
-  useEffect(() => {
-  console.log("Verificando cookies: ", document.cookie); // Verifique se o cookie está presente
-  const token = Cookies.get('token'); // Recupera o token do cookie
-  console.log("Token recuperado: ", token); // Debug do token
+  // useEffect(() => {
+  //   console.log("Verificando cookies: ", document.cookie); // Verifique se o cookie está presente
+  //   const token = Cookies.get('token'); // Recupera o token do cookie
+  //   console.log("Token recuperado: ", token); // Debug do token
 
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
-      
-      // Verifique se o token está expirado
-      const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
-      
-      if (isExpired) {
-        setIsLoggedIn(false);
-      } else {
-        if (decoded.username === 'qualidade' || decoded.username === 'admin') {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao decodificar o token:', error);
-    }
-  } else {
-    setIsLoggedIn(false);
-  }
-}, []);
+  //   if (token) {
+  //     try {
+  //       const decoded = jwtDecode(token);
+  //       console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
+
+  //       // Verifique se o token está expirado
+  //       const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
+
+  //       if (isExpired) {
+  //         setIsLoggedIn(false);
+  //       } else {
+  //         if (decoded.username === 'qualidade' || decoded.username === 'admin') {
+  //           setIsLoggedIn(true);
+  //         } else {
+  //           setIsLoggedIn(false);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('Erro ao decodificar o token:', error);
+  //     }
+  //   } else {
+  //     setIsLoggedIn(false);
+  //   }
+  // }, []);
 
 
 
 
 
   const validarCamposObrigatorios = () => {
-  const novosErros = {};
+    const novosErros = {};
 
-  const isFieldValid = (value) => {
-    return value !== null && value !== undefined && value !== '';  // Permite 0 como valor válido
+    const isFieldValid = (value) => {
+      return value !== null && value !== undefined && value !== '';  // Permite 0 como valor válido
+    };
+
+    // Verificar todos os campos
+    if (!isFieldValid(produto)) novosErros.produto = true;
+    if (!isFieldValid(porcao)) novosErros.porcao = true;
+    if (!isFieldValid(caseira)) novosErros.caseira = true;
+    if (!isFieldValid(energia100g)) novosErros.energia100g = true;
+    if (!isFieldValid(energiag)) novosErros.energiag = true;
+    if (!isFieldValid(energiaVD)) novosErros.energiaVD = true;
+    if (!isFieldValid(carb100g)) novosErros.carb100g = true;
+    if (!isFieldValid(carbg)) novosErros.carbg = true;
+    if (!isFieldValid(carbVD)) novosErros.carbVD = true;
+    if (!isFieldValid(acucar100g)) novosErros.acucar100g = true;
+    if (!isFieldValid(acucarg)) novosErros.acucarg = true;
+    if (!isFieldValid(acucarVD)) novosErros.acucarVD = true;
+    if (!isFieldValid(acucarad100g)) novosErros.acucarad100g = true;
+    if (!isFieldValid(acucaradg)) novosErros.acucaradg = true;
+    if (!isFieldValid(acucaradVD)) novosErros.acucaradVD = true;
+    if (!isFieldValid(proteina100g)) novosErros.proteina100g = true;
+    if (!isFieldValid(proteinag)) novosErros.proteinag = true;
+    if (!isFieldValid(proteinaVD)) novosErros.proteinaVD = true;
+    if (!isFieldValid(gorduraTotal100g)) novosErros.gorduraTotal100g = true;
+    if (!isFieldValid(gorduraTotalg)) novosErros.gorduraTotalg = true;
+    if (!isFieldValid(gorduraTotalVD)) novosErros.gorduraTotalVD = true;
+    if (!isFieldValid(gorduraSaturada100g)) novosErros.gorduraSaturada100g = true;
+    if (!isFieldValid(gorduraSaturadag)) novosErros.gorduraSaturadag = true;
+    if (!isFieldValid(gorduraSaturadaVD)) novosErros.gorduraSaturadaVD = true;
+    if (!isFieldValid(gorduraTrans100g)) novosErros.gorduraTrans100g = true;
+    if (!isFieldValid(gorduraTransg)) novosErros.gorduraTransg = true;
+    if (!isFieldValid(gorduraTransVD)) novosErros.gorduraTransVD = true;
+    if (!isFieldValid(fibra100g)) novosErros.fibra100g = true;
+    if (!isFieldValid(fibrag)) novosErros.fibrag = true;
+    if (!isFieldValid(fibraVD)) novosErros.fibraVD = true;
+    if (!isFieldValid(sodio100g)) novosErros.sodio100g = true;
+    if (!isFieldValid(sodiog)) novosErros.sodiog = true;
+    if (!isFieldValid(sodioVD)) novosErros.sodioVD = true;
+    if (!isFieldValid(ingredientes)) novosErros.ingredientes = true;
+    if (!isFieldValid(valoresReferencia)) novosErros.valoresReferencia = true;
+    if (!isFieldValid(armazenamento)) novosErros.armazenamento = true;
+    if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
+    if (!isFieldValid(glutem)) novosErros.glutem = true;
+    if (!isFieldValid(lactose)) novosErros.lactose = true;
+    if (!isFieldValid(quantidade)) novosErros.quantidade = true;
+    if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
+    if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
+    if (!isFieldValid(validade)) novosErros.validade = true;
+
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
   };
-
-  // Verificar todos os campos
-  if (!isFieldValid(produto)) novosErros.produto = true;
-  if (!isFieldValid(porcao)) novosErros.porcao = true;
-  if (!isFieldValid(caseira)) novosErros.caseira = true;
-  if (!isFieldValid(energia100g)) novosErros.energia100g = true;
-  if (!isFieldValid(energiag)) novosErros.energiag = true;
-  if (!isFieldValid(energiaVD)) novosErros.energiaVD = true;
-  if (!isFieldValid(carb100g)) novosErros.carb100g = true;
-  if (!isFieldValid(carbg)) novosErros.carbg = true;
-  if (!isFieldValid(carbVD)) novosErros.carbVD = true;
-  if (!isFieldValid(acucar100g)) novosErros.acucar100g = true;
-  if (!isFieldValid(acucarg)) novosErros.acucarg = true;
-  if (!isFieldValid(acucarVD)) novosErros.acucarVD = true;
-  if (!isFieldValid(acucarad100g)) novosErros.acucarad100g = true;
-  if (!isFieldValid(acucaradg)) novosErros.acucaradg = true;
-  if (!isFieldValid(acucaradVD)) novosErros.acucaradVD = true;
-  if (!isFieldValid(proteina100g)) novosErros.proteina100g = true;
-  if (!isFieldValid(proteinag)) novosErros.proteinag = true;
-  if (!isFieldValid(proteinaVD)) novosErros.proteinaVD = true;
-  if (!isFieldValid(gorduraTotal100g)) novosErros.gorduraTotal100g = true;
-  if (!isFieldValid(gorduraTotalg)) novosErros.gorduraTotalg = true;
-  if (!isFieldValid(gorduraTotalVD)) novosErros.gorduraTotalVD = true;
-  if (!isFieldValid(gorduraSaturada100g)) novosErros.gorduraSaturada100g = true;
-  if (!isFieldValid(gorduraSaturadag)) novosErros.gorduraSaturadag = true;
-  if (!isFieldValid(gorduraSaturadaVD)) novosErros.gorduraSaturadaVD = true;
-  if (!isFieldValid(gorduraTrans100g)) novosErros.gorduraTrans100g = true;
-  if (!isFieldValid(gorduraTransg)) novosErros.gorduraTransg = true;
-  if (!isFieldValid(gorduraTransVD)) novosErros.gorduraTransVD = true;
-  if (!isFieldValid(fibra100g)) novosErros.fibra100g = true;
-  if (!isFieldValid(fibrag)) novosErros.fibrag = true;
-  if (!isFieldValid(fibraVD)) novosErros.fibraVD = true;
-  if (!isFieldValid(sodio100g)) novosErros.sodio100g = true;
-  if (!isFieldValid(sodiog)) novosErros.sodiog = true;
-  if (!isFieldValid(sodioVD)) novosErros.sodioVD = true;
-  if (!isFieldValid(ingredientes)) novosErros.ingredientes = true;
-  if (!isFieldValid(valoresReferencia)) novosErros.valoresReferencia = true;
-  if (!isFieldValid(armazenamento)) novosErros.armazenamento = true;
-  if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
-  if (!isFieldValid(glutem)) novosErros.glutem = true;
-  if (!isFieldValid(lactose)) novosErros.lactose = true;
-  if (!isFieldValid(quantidade)) novosErros.quantidade = true;
-  if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
-  if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
-  if (!isFieldValid(validade)) novosErros.validade = true;
-
-  setErros(novosErros);
-  return Object.keys(novosErros).length === 0;
-};
 
 
 
@@ -419,46 +422,51 @@ const EtiquetasLoja = () => {
       doc.line(29, y - 32, 29, y + 2); // Linha vertical entre "Nutriente" e "100g"
       doc.line(35, y - 32, 35, y + 2); // Linha vertical entre "100g" e "120g"
       doc.line(41, y - 32, 41, y + 2); // Linha vertical entre "100g" e "120g"
-      doc.line(47, y - 39, 47, y + 15); // Linha vertical entre "100g" e "120g"
-      doc.line(2, y - 39, 2, y + 15); // Linha vertical entre "100g" e "120g"
+      doc.line(47, y - 39, 47, y + 8); // Linha vertical entre "100g" e "120g"
+      doc.line(2, y - 39, 2, y + 8); // Linha vertical entre "100g" e "120g"
       doc.line(2, y - 39, 47, y - 39); // Linha horizontal após cada item
       doc.line(2, y - 28, 47, y - 28); // Linha horizontal após cada item
-      doc.line(2, y + 15, 47, y + 15); // Linha horizontal após cada item
+      doc.line(2, y + 8, 47, y + 8); // Linha horizontal após cada item
 
       doc.text(`${valoresReferencia}`, 3, y + 4);
 
-      doc.text(`INGREDIENTES:`, 48, y - 37);
-      doc.text(String(ingredientes), 48, y - 34);
 
-      doc.setFont("helvetica", "bold");
-      doc.text(`${String(glutem)} GLÚTEN.\n${String(lactose)} LACTOSE.`, 48, y - 18);
-      doc.text(`ALERGÊNICOS:`, 48, y - 13);
-      doc.text(String(alergenicos), 48, y - 10);
 
       doc.setFont("helvetica", "normal");
-      doc.text(String(armazenamento), 48, y + 5);
+      // doc.text(String(armazenamento), 48, y + 5);
+
+      doc.setFontSize(7);
+
+
+      doc.text(`INGREDIENTES:`, 48, y - 39);
+      doc.text(String(ingredientes), 48, y - 36);
+
+      doc.setFontSize(6);
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`${String(glutem)} GLÚTEN.\n${String(lactose)} LACTOSE.`, 2, y + 11);
+      doc.text(`ALERGÊNICOS: ${String(alergenicos)}`, 2, y + 16);
 
       doc.setFontSize(15);
       doc.setFont("helvetica", "bold");
-      doc.text(String(nomeProduto), 3, y - 43)
+      doc.text(String(nomeProduto), 2, y - 43)
 
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
-      doc.text("DATA:", 3, y + 22);
-      doc.text("VALIDADE:", 3, y + 28);
+      doc.text("Fab.:", 3, y + 25);
+      doc.text("Val.:", 3, y + 28);
 
-      doc.text(formatDate(fabricacao), 25, y + 22);
-      doc.text(formatDate(validade), 25, y + 28);
+      doc.text(formatDate(fabricacao), 10, y + 25);
+      doc.text(formatDate(validade), 10, y + 28);
 
-      doc.text(`QUANT.: ${String(quantidade)}`, 50, y + 18);
-      doc.text(`R$/Unid.: ${String(valorQuant)}`, 50, y + 22);
-      doc.line(49, y + 31, 75, y + 31);
 
-      doc.text(`TOTAL: R$${String(valorTotal)}`, 50, y + 28);
+
+      doc.text(`TOTAL: R$${String(valorTotal)}`, 26, y + 28);
     }
     // Gerar o blob do PDF
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
+    // PdfToImage (pdfUrl)
 
     // Verifica se a janela foi aberta com sucesso
     const printWindow = window.open(pdfUrl);
@@ -473,6 +481,97 @@ const EtiquetasLoja = () => {
       console.error("Não foi possível abrir a janela para impressão.");
     }
   };
+
+  // Função para converter o PDF em uma imagem usando pdf.js
+  // Função para converter o PDF para imagem
+  // Função para converter o PDF para imagem
+  // const renderPDFToImage = async (pdfUrl) => {
+  //   try {
+  //     // Carrega o PDF
+  //     const loadingTask = pdfjsLib.getDocument(pdfUrl);
+  //     const pdf = await loadingTask.promise;
+
+  //     // Pegue a primeira página do PDF
+  //     const page = await pdf.getPage(1);
+
+  //     const canvas = document.createElement('canvas');
+  //     const context = canvas.getContext('2d');
+
+  //     // Aumente o valor de scale para melhorar a qualidade da imagem
+  //     const scale = 2.0; // Ajuste conforme necessário
+  //     const viewport = page.getViewport({ scale: scale });
+
+  //     canvas.width = viewport.width;
+  //     canvas.height = viewport.height;
+
+  //     // Renderizar a página no canvas
+  //     await page.render({
+  //       canvasContext: context,
+  //       viewport: viewport,
+  //     }).promise;
+
+  //     // Converter o canvas para uma imagem base64
+  //     const imageUrl = canvas.toDataURL();
+
+  //     // Criar uma nova janela de impressão com somente a imagem
+  //     const printWindow = window.open('', '', 'width=600,height=600');
+
+  //     // Inserir o conteúdo HTML sem mostrar link, data ou quantas páginas
+  //     printWindow.document.write('<html><head><title>Impressão</title><style>body{margin:0; padding:0; overflow:hidden;} img{width:100%; height:auto; object-fit:contain;}</style></head><body>');
+  //     // Adiciona apenas a imagem com o estilo desejado
+  //     printWindow.document.write(`<img src="${imageUrl}" />`);
+  //     printWindow.document.write('</body></html>');
+
+  //     // Aguarda a janela carregar e imprime automaticamente
+  //     setTimeout(() => {
+  //       printWindow.focus();
+  //       printWindow.print();
+  //       printWindow.close();  // Fecha a janela após a impressão
+  //     }, 500);
+  //   } catch (error) {
+  //     console.error('Erro ao renderizar o PDF:', error);
+  //   }
+  // };
+
+
+
+
+  // Chama a função para converter o PDF em imagem e imprimir
+  //   renderPDFToImage(pdfUrl);
+  // };
+  // // const PdfToImage = ({ pdfUrl }) => {
+  //   const canvasRef = useRef(null);
+  //   const [imageData, setImageData] = useState(null)
+
+  //   useEffect(() => {
+  //     const loadPdf = async () => {
+  //       const loadingTask = pdfjs.getDocument(pdfUrl);
+  //       const pdf = await loadingTask.promise;
+
+  //       // Pega a primeira página do PDF
+  //       const page = await pdf.getPage(1);
+
+  //       const scale = 1.5;  // Define o nível de zoom da página
+  //       const viewport = page.getViewport({ scale });
+
+  //       const canvas = canvasRef.current;
+  //       const context = canvas.getContext('2d');
+  //       canvas.height = viewport.height;
+  //       canvas.width = viewport.width;
+
+  //       await page.render({
+  //         canvasContext: context,
+  //         viewport: viewport,
+  //       }).promise;
+
+  //       // Converter o conteúdo do canvas em uma imagem
+  //       const image = canvas.toDataURL('image/png');
+  //       setImageData(image); // Armazena a imagem convertida no estado
+  //     };
+
+  //     loadPdf();
+  //   }, [pdfUrl]);
+  // }
 
   const handleCriarProduto = () => {
     if (!validarCamposObrigatorios()) {
