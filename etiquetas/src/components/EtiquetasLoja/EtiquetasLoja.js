@@ -189,12 +189,12 @@ const EtiquetasLoja = () => {
     if (!isFieldValid(sodioVD)) novosErros.sodioVD = true;
     if (!isFieldValid(ingredientes)) novosErros.ingredientes = true;
     if (!isFieldValid(valoresReferencia)) novosErros.valoresReferencia = true;
-    if (!isFieldValid(armazenamento)) novosErros.armazenamento = true;
+    // if (!isFieldValid(armazenamento)) novosErros.armazenamento = true;
     if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
     if (!isFieldValid(glutem)) novosErros.glutem = true;
     if (!isFieldValid(lactose)) novosErros.lactose = true;
-    if (!isFieldValid(quantidade)) novosErros.quantidade = true;
-    if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
+    // if (!isFieldValid(quantidade)) novosErros.quantidade = true;
+    // if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
     if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
     if (!isFieldValid(validade)) novosErros.validade = true;
 
@@ -1113,7 +1113,7 @@ const EtiquetasLoja = () => {
                   </div>
                 </div>
                 <div className='d-flex'>
-                  <div className='me-4'>
+                  {/* <div className='me-4'>
                     <label>Armazenamento</label>
                     <textarea
                       value={armazenamento}
@@ -1127,7 +1127,7 @@ const EtiquetasLoja = () => {
                       style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.armazenamento ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
                     />
                     {erros.armazenamento && <small className="text-danger">Campo obrigatório</small>}
-                  </div>
+                  </div> */}
                   <div className='me-4'>
                     <label>Alergenicos</label>
                     <textarea
@@ -1185,7 +1185,7 @@ const EtiquetasLoja = () => {
                   </div>
                 </div>
                 <div className='d-flex mb-3'>
-                  <div className='me-4'>
+                  {/* <div className='me-4'>
 
                     <label>Quantidade</label>
                     <input
@@ -1201,8 +1201,8 @@ const EtiquetasLoja = () => {
                       style={{ maxWidth: '60px', border: erros.quantidade ? '1px solid red' : undefined }}
                     />
                     {erros.quantidade && <small className="text-danger">Campo obrigatório</small>}
-                  </div>
-                  <div className='me-4'>
+                  </div> */}
+                  {/* <div className='me-4'>
 
                     <label>Valor Unidade</label>
                     <input
@@ -1217,7 +1217,7 @@ const EtiquetasLoja = () => {
                       style={{ maxWidth: '60px', border: erros.valorQuant ? '1px solid red' : undefined }}
                     />
                     {erros.valorQuant && <small className="text-danger">Campo obrigatório</small>}
-                  </div>
+                  </div> */}
                   <div className='me-4'>
 
                     <label>Valor Total</label>
