@@ -112,35 +112,35 @@ const EtiquetasLoja = () => {
 
   const [erros, setErros] = useState({});
   // Token esperado
-  // useEffect(() => {
-  //   console.log("Verificando cookies: ", document.cookie); // Verifique se o cookie está presente
-  //   const token = Cookies.get('token'); // Recupera o token do cookie
-  //   console.log("Token recuperado: ", token); // Debug do token
+  useEffect(() => {
+    console.log("Verificando cookies: ", document.cookie); // Verifique se o cookie está presente
+    const token = Cookies.get('token'); // Recupera o token do cookie
+    console.log("Token recuperado: ", token); // Debug do token
 
-  //   if (token) {
-  //     try {
-  //       const decoded = jwtDecode(token);
-  //       console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
 
-  //       // Verifique se o token está expirado
-  //       const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
+        // Verifique se o token está expirado
+        const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
 
-  //       if (isExpired) {
-  //         setIsLoggedIn(false);
-  //       } else {
-  //         if (decoded.username === 'qualidade' || decoded.username === 'admin') {
-  //           setIsLoggedIn(true);
-  //         } else {
-  //           setIsLoggedIn(false);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error('Erro ao decodificar o token:', error);
-  //     }
-  //   } else {
-  //     setIsLoggedIn(false);
-  //   }
-  // }, []);
+        if (isExpired) {
+          setIsLoggedIn(false);
+        } else {
+          if (decoded.username === 'qualidade' || decoded.username === 'admin') {
+            setIsLoggedIn(true);
+          } else {
+            setIsLoggedIn(false);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao decodificar o token:', error);
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
 
 
 
