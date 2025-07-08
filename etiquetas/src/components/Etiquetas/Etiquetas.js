@@ -171,7 +171,7 @@ const Etiquetas = () => {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-4 text-center">
       <h2>Preencher Etiquetas</h2>
       {etiquetas.map((etiqueta, idx) => (
         <div key={idx} className="mb-3 d-flex align-items-center">

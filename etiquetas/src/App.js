@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Etiquetas from './components/Etiquetas/Etiquetas';
 import EtiquetasLoja from './components/EtiquetasLoja/EtiquetasLoja';
+import PlanejamentoProd from './components/PlanejamentoProd/PlanejamentoProd';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -16,6 +17,7 @@ const App = () => {
           <Routes>
             <Route path="/etiquetas" element={<Etiquetas />} />
             <Route path="/etiquetasLoja" element={<EtiquetasLoja />} />
+            <Route path="/PlanejamentoProd" element={<PlanejamentoProd />} />
           </Routes>
         </Router>
       </div>
