@@ -44,7 +44,7 @@ const PlanejamentoProd = () => {
     setLoading(true); // Inicia o carregamento
 
     try {
-      const response = await fetch(`http://192.168.1.168:4001/planejamento-prod?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`http://192.168.1.250/server-pascoa/planejamento-prod?startDate=${startDate}&endDate=${endDate}`);
       if (!response.ok) throw new Error('Erro ao buscar dados');
       const json = await response.json();
       setDados(json); // Aqui, os dados serão armazenados conforme a estrutura do backend
