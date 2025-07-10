@@ -256,7 +256,7 @@ const PlanejamentoProd = () => {
                 Total:
               </td>
               <td className="sortable-cell" style={{ fontWeight: 'bold' }}>
-                {totalQuantidade}
+                {totalQuantidade.toFixed()}
               </td>
               <td className="sortable-cell" style={{ fontWeight: 'bold' }}>
                 UN
