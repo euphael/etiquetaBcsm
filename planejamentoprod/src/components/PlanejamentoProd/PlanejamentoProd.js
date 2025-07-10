@@ -21,7 +21,8 @@ const PlanejamentoProd = () => {
     direction: 'asc',
   });
   const [totalQuantidade, setTotalQuantidade] = useState(0); // Estado para o total da quantidade
-  
+  const [setoresSelecionados, setSetoresSelecionados] = useState([]); // Estado para múltiplos setores selecionados
+
   
   const cleanText = (str) => {
     return str.replace(/[^\x20-\x7E]/g, ''); // Substitui caracteres não imprimíveis por uma string vazia
@@ -57,9 +58,10 @@ const PlanejamentoProd = () => {
 
   // Função de filtro por setor
   const filterBySetor = (item) => {
-    if (!setorSelecionado) return true; // Se nenhum setor estiver selecionado, retorna todos
-    return cleanText(item.IDX_LINHA) === setorSelecionado; // Filtra pelos itens que pertencem ao setor selecionado
-  };
+  if (setoresSelecionados.length === 0) return true; // Se nenhum setor estiver selecionado, retorna todos
+  return setoresSelecionados.includes(cleanText(item.IDX_LINHA)); // Filtra pelos itens que pertencem aos setores selecionados
+};
+
 
   const filteredData = dados?.filter(item => filterBySetor(item) && filterBySearch(item));
 
@@ -179,23 +181,28 @@ const PlanejamentoProd = () => {
       )}
 
       <div className="flex-wrap gap-2 m-2">
-        {/* Botões para filtrar por setor */}
-        {getSetores()
-        .sort() 
-        .map((setor, index) => (
-          <Button
-            key={index}
-            variant={setorSelecionado === setor ? 'primary' : 'outline-primary'}
-            onClick={() => setSetorSelecionado(setorSelecionado === setor ? '' : setor)}
-            style={{minWidth:'60px'}}
-            className='m-2'
-          >
-            {setor}
-          </Button>
-        ))}
-        {/* Botão para mostrar todos os setores */}
+  {getSetores()
+    .sort()
+    .map((setor, index) => (
+      <Button
+        key={index}
+        variant={setoresSelecionados.includes(setor) ? 'primary' : 'outline-primary'}
+        onClick={() => {
+          // Adiciona ou remove o setor da lista de setores selecionados
+          if (setoresSelecionados.includes(setor)) {
+            setSetoresSelecionados(setoresSelecionados.filter(s => s !== setor)); // Remove o setor
+          } else {
+            setSetoresSelecionados([...setoresSelecionados, setor]); // Adiciona o setor
+          }
+        }}
+        style={{ minWidth: '60px' }}
+        className="m-2"
+      >
+        {setor}
+      </Button>
+    ))}
+</div>
 
-      </div>
 
       <div className="form-group mt-3">
         <label htmlFor="searchOr">Pesquise pela Descrição:</label>
