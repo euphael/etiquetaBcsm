@@ -11,8 +11,6 @@ RUN npm run build
 # Etapa 2: Servir com NGINX
 FROM nginx:alpine AS production
 
-RUN rm -drf /usr/share/nginx/html/50x.html
-RUN rm -drf /etc/nginx/conf.d/default.conf
 # Copia arquivos do build para o NGINX
 COPY --from=build /app/build /usr/share/nginx/html
 
@@ -21,6 +19,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-
-
 
