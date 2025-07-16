@@ -296,7 +296,7 @@ const PlanejamentoProd = () => {
                     onDoubleClick={() => setSearchTerm(item.DESCRICAO)}
                   >{cleanText(item.DESCRICAO)}</td>
                   <td className="sortable-cell">{item.TOTAL_QUANTIDADE}</td>
-                  <td className="sortable-cell">{calculaPeso(item).toFixed(3)} (g)</td>
+                  <td className="sortable-cell">{calculaPeso(item).toFixed(3)} (kg)</td>
                   <td className="sortable-cell">{item.UNIDADE}</td>
                   <td className="sortable-cell">{formatDate(item.PREVISAO_DATA)}</td>
                   <td className="sortable-cell">{cleanText(item.IDX_LINHA)}</td>
@@ -311,7 +311,7 @@ const PlanejamentoProd = () => {
                 {totalQuantidade.toFixed()} (UN)
               </td>
               <td className="sortable-cell" style={{ fontWeight: 'bold' }}>
-                {pesoTotal} (g)
+                {pesoTotal} (kg)
               </td>
               
               <td colSpan="3"></td>
