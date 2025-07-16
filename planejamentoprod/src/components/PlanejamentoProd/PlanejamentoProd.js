@@ -15,15 +15,16 @@ const PlanejamentoProd = () => {
   const [dados, setDados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false); // Estado de carregamento
-  const [setorSelecionado, setSetorSelecionado] = useState(''); // Estado para o setor selecionado
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'asc',
   });
+    const [pesoTotal, setPesoTotal] = useState(0); // Estado para o total da quantidade
+
   const [totalQuantidade, setTotalQuantidade] = useState(0); // Estado para o total da quantidade
   const [setoresSelecionados, setSetoresSelecionados] = useState([]); // Estado para múltiplos setores selecionados
 
-  
+
   const cleanText = (str) => {
     return str.replace(/[^\x20-\x7E]/g, ''); // Substitui caracteres não imprimíveis por uma string vazia
   };
@@ -58,9 +59,36 @@ const PlanejamentoProd = () => {
 
   // Função de filtro por setor
   const filterBySetor = (item) => {
-  if (setoresSelecionados.length === 0) return true; // Se nenhum setor estiver selecionado, retorna todos
-  return setoresSelecionados.includes(cleanText(item.IDX_LINHA)); // Filtra pelos itens que pertencem aos setores selecionados
-};
+    if (setoresSelecionados.length === 0) return true; // Se nenhum setor estiver selecionado, retorna todos
+    return setoresSelecionados.includes(cleanText(item.IDX_LINHA)); // Filtra pelos itens que pertencem aos setores selecionados
+  };
+
+  const calculaPeso = (item) => {
+    let pesagem = 0;
+    let unidade = item.UNIDADE;
+
+    if (unidade === 'PP') {
+      pesagem = (item.TOTAL_QUANTIDADE / 10) * item.PESOKG;
+      unidade = "KG";
+    } else if (unidade === 'UD') {
+      pesagem = (item.TOTAL_QUANTIDADE / 100) * item.PESOKG;
+      unidade = "KG";
+    } else if (unidade === 'UM') {
+      pesagem = (item.TOTAL_QUANTIDADE / 10) * item.PESOKG;
+      unidade = "KG";
+    } else if (unidade === 'CT') {
+      pesagem = item.TOTAL_QUANTIDADE * (item.PESOKG * 100);
+      unidade = "KG";
+    } else {
+      pesagem = item.TOTAL_QUANTIDADE * item.PESOKG;
+    }
+
+    // Se a unidade for "UN" ou "PX", muda para "KG"
+    if (unidade === "UN" || unidade === "PX") {
+      unidade = "KG";
+    }
+    return pesagem
+  }
 
 
   const filteredData = dados?.filter(item => filterBySetor(item) && filterBySearch(item));
@@ -68,6 +96,7 @@ const PlanejamentoProd = () => {
   useEffect(() => {
     if (filteredData) {
       calculateTotalQuantity(filteredData);
+      calculateTotalPeso(filteredData);
     }
   }, [filteredData]);
 
@@ -120,6 +149,18 @@ const PlanejamentoProd = () => {
     }, 0);
     setTotalQuantidade(total);
   };
+  const calculateTotalPeso = (filteredItems) => {
+  const total = filteredItems.reduce((acc, item) => {
+    // Soma o peso total diretamente, multiplicando a quantidade pelo PESOKG
+    acc.pesoTotal += calculaPeso(item);
+
+    return acc;
+  }, { pesoTotal: 0 });
+
+  // Atualiza o estado com o peso total calculado
+  setPesoTotal(total.pesoTotal.toFixed(3)); // Formata para 2 casas decimais
+};
+
 
   // Função para extrair setores únicos dos dados
   const getSetores = () => {
@@ -160,7 +201,7 @@ const PlanejamentoProd = () => {
           </div>
         </div>
         <Button variant="primary" type="submit" disabled={loading}
-        className='m-2'>
+          className='m-2'>
           {loading ? (
             <>
               <Spinner as="span" animation="grow" size="sm" role="status" aria-hidden="true" />&nbsp;
@@ -181,27 +222,27 @@ const PlanejamentoProd = () => {
       )}
 
       <div className="flex-wrap gap-2 m-2">
-  {getSetores()
-    .sort()
-    .map((setor, index) => (
-      <Button
-        key={index}
-        variant={setoresSelecionados.includes(setor) ? 'primary' : 'outline-primary'}
-        onClick={() => {
-          // Adiciona ou remove o setor da lista de setores selecionados
-          if (setoresSelecionados.includes(setor)) {
-            setSetoresSelecionados(setoresSelecionados.filter(s => s !== setor)); // Remove o setor
-          } else {
-            setSetoresSelecionados([...setoresSelecionados, setor]); // Adiciona o setor
-          }
-        }}
-        style={{ minWidth: '60px' }}
-        className="m-2"
-      >
-        {setor}
-      </Button>
-    ))}
-</div>
+        {getSetores()
+          .sort()
+          .map((setor, index) => (
+            <Button
+              key={index}
+              variant={setoresSelecionados.includes(setor) ? 'primary' : 'outline-primary'}
+              onClick={() => {
+                // Adiciona ou remove o setor da lista de setores selecionados
+                if (setoresSelecionados.includes(setor)) {
+                  setSetoresSelecionados(setoresSelecionados.filter(s => s !== setor)); // Remove o setor
+                } else {
+                  setSetoresSelecionados([...setoresSelecionados, setor]); // Adiciona o setor
+                }
+              }}
+              style={{ minWidth: '60px' }}
+              className="m-2"
+            >
+              {setor}
+            </Button>
+          ))}
+      </div>
 
 
       <div className="form-group mt-3">
@@ -222,14 +263,17 @@ const PlanejamentoProd = () => {
           <thead>
             <tr>
               <th>#</th>
-              <th className={`sortable-header ${sortConfig.key === 'CODPRODUTO' ? 'active' : ''}`} onClick={dados.length > 0 ? () => handleSort('CODPRODUTO') : null}>
-                Código {sortConfig.key === 'CODPRODUTO' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+              <th className={`sortable-header ${sortConfig.key === 'IDX_PRODUTOD' ? 'active' : ''}`} onClick={dados.length > 0 ? () => handleSort('IDX_PRODUTO') : null}>
+                Código {sortConfig.key === 'IDX_PRODUTO' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
               </th>
               <th className={`sortable-header ${sortConfig.key === 'DESCRICAO' ? 'active' : ''}`} onClick={dados.length > 0 ? () => handleSort('DESCRICAO') : null}>
                 Descrição {sortConfig.key === 'DESCRICAO' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
               </th>
               <th className={`sortable-header ${sortConfig.key === 'TOTAL_QUANTIDADE' ? 'active' : ''}`} onClick={dados.length > 0 ? () => handleSort('TOTAL_QUANTIDADE') : null}>
                 Quantidade {sortConfig.key === 'TOTAL_QUANTIDADE' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+              </th>
+              <th className={`sortable-header ${sortConfig.key === 'PESOKG' ? 'active' : ''}`} onClick={dados.length > 0 ? () => handleSort('PESOKG') : null}>
+                Peso (kg) {sortConfig.key === 'PESOKG' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
               </th>
               <th className={`sortable-header ${sortConfig.key === 'UNIDADE' ? 'active' : ''}`} onClick={dados.length > 0 ? () => handleSort('UNIDADE') : null}>
                 Unidade {sortConfig.key === 'UNIDADE' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
@@ -247,11 +291,12 @@ const PlanejamentoProd = () => {
               return (
                 <tr key={index}>
                   <td className="sortable-cell">{index + 1}</td>
-                  <td className="sortable-cell">{item.CODPRODUTO}</td>
+                  <td className="sortable-cell">{item.IDX_PRODUTO}</td>
                   <td className="sortable-cell"
                     onDoubleClick={() => setSearchTerm(item.DESCRICAO)}
-                  >{item.DESCRICAO}</td>
+                  >{cleanText(item.DESCRICAO)}</td>
                   <td className="sortable-cell">{item.TOTAL_QUANTIDADE}</td>
+                  <td className="sortable-cell">{calculaPeso(item).toFixed(3)} (g)</td>
                   <td className="sortable-cell">{item.UNIDADE}</td>
                   <td className="sortable-cell">{formatDate(item.PREVISAO_DATA)}</td>
                   <td className="sortable-cell">{cleanText(item.IDX_LINHA)}</td>
@@ -263,11 +308,12 @@ const PlanejamentoProd = () => {
                 Total:
               </td>
               <td className="sortable-cell" style={{ fontWeight: 'bold' }}>
-                {totalQuantidade.toFixed()}
+                {totalQuantidade.toFixed()} (UN)
               </td>
               <td className="sortable-cell" style={{ fontWeight: 'bold' }}>
-                UN
+                {pesoTotal} (g)
               </td>
+              
               <td colSpan="3"></td>
             </tr>
           </tbody>
