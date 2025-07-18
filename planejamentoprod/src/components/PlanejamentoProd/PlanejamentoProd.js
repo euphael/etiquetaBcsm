@@ -26,8 +26,8 @@ const PlanejamentoProd = () => {
 
 
   const cleanText = (str) => {
-    return str.replace(/[^\x20-\x7E]/g, ''); // Substitui caracteres não imprimíveis por uma string vazia
-  };
+    return str.replace(/[^\x20-\x7E\u0080-\uFFFF]/g, ''); // Permite todos os caracteres imprimíveis Unicode
+};
   const filterBySearch = (item) => {
     if (!item) return false;
 
