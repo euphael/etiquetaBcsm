@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import jsPDF from "jspdf";
 import axios from 'axios';
 import Select from 'react-select';
-import { isCookie, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -18,7 +17,6 @@ import imgtransgenico from '../assets/transgenicos.png';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-
 function formatarProduto(str) {
   if (!str) return '';
   return str
@@ -28,7 +26,6 @@ function formatarProduto(str) {
 const EtiquetasLoja = () => {
   // Função para obter a data de hoje no formato yyyy-mm-dd
   const [showModal, setShowModal] = useState(false); // Controle do modal
-  const [confirmacaoAtiva, setConfirmacaoAtiva] = useState(false);
   const [showModalConfirmacao, setShowModalConfirmacao] = useState(false);
 
   function getHojeISO() {
@@ -38,6 +35,7 @@ const EtiquetasLoja = () => {
     const dd = String(hoje.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   }
+
   const [porcao, setPorcao] = useState('');
   const [caseira, setCaseira] = useState('');
   const [energia100g, setEnergia100g] = useState('');
@@ -146,10 +144,6 @@ const EtiquetasLoja = () => {
     }
   }, []);
 
-
-
-
-
   const validarCamposObrigatorios = () => {
     const novosErros = {};
 
@@ -209,14 +203,10 @@ const EtiquetasLoja = () => {
     return Object.keys(novosErros).length === 0;
   };
 
-
-
   const opcoesProdutos = produtos.map(produto => ({
     value: produto.id,
     label: `${produto.id} - ${formatarProduto(produto.produto)}`
   }));
-
-
 
   const handleCriar = () => {
     // limparCampos(); // opcional, se quiser limpar os campos
@@ -269,11 +259,6 @@ const EtiquetasLoja = () => {
     setShowModal(true);
   };
 
-
-
-
-
-
   const handleExcluir = () => {
     if (!itemSelecionado || !itemSelecionado.id) {
       alert("Nenhum item selecionado para exclusão.");
@@ -297,19 +282,10 @@ const EtiquetasLoja = () => {
       });
   };
 
-
-
-
-
-
-
-
-
-
-
   const [etiquetas, setEtiquetas] = useState([
     { nome: '', fab: getHojeISO(), conservacao: '' }
   ]);
+
   const formatDate = (date) => {
     try {
       if (!date) return '';
@@ -329,7 +305,6 @@ const EtiquetasLoja = () => {
     }
   };
 
-
   const buscarProdutos = () => {
     axios.get('http://192.168.1.250/server-pascoa/etiquetas')
       .then(response => {
@@ -340,9 +315,6 @@ const EtiquetasLoja = () => {
         alert('Erro ao buscar produtos. Tente novamente.');
       });
   };
-
-
-
 
   useEffect(() => {
     buscarProdutos();
@@ -407,7 +379,6 @@ const EtiquetasLoja = () => {
           // Verifica se a palavra atual cabe na linha
           const testLine = line ? line + " " + word : word;
           const width = doc.getStringUnitWidth(testLine) * doc.getFontSize();
-
           // Se a largura exceder o limite, adiciona a linha e começa uma nova
           if (width > maxWidth) {
             lines.push(line);
@@ -416,96 +387,55 @@ const EtiquetasLoja = () => {
             line = testLine;
           }
         });
-
-
         lines.push(line);
         return lines.join("\n");
       };
-
       let y = 5;
       doc.setFont("helvetica", "normal");
-
-
       y += 8;
-
-
       y += 6;
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7);
       doc.text("INFORMAÇÃO NUTRICIONAL", 1, y + 1)
       doc.line(1.5, y + 2, 78.5, y + 2)
-
       doc.setFont("helvetica", "normal");
       doc.text(`Porções de ${String(porcao)} g (${String(caseira)})`, 1, y + 5);
       doc.setLineWidth(0.8)
       doc.line(1.5, y + 6.5, 78.5, y + 6.5)
       doc.setLineWidth(0.2)
-
-
       const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g, ${acucarVD}%), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
-
-      // Quebra o texto se ele exceder 90 mm
       const textoQuebrado = wrapText(texto, maxLineWidth, doc);
-
-
       doc.text(textoQuebrado, 1, y + 10);
-
       doc.line(0.5, y - 2, 79.5, y - 2)
       doc.line(1.5, y + 26, 78.5, y + 26)
       doc.line(0.5, y + 30, 79.5, y + 30)
-
       doc.line(0.5, y - 2, 0.5, y + 30)
       doc.line(79.5, y - 2, 79.5, y + 30)
-      doc.text('*Percentual de valores diários fornecidos pela porção.', 1, y + 29)
-
-
-
-
-
-
+      doc.text(`${valoresReferencia}.`, 1, y + 29)
       doc.setFont("helvetica", "normal");
-
       doc.setFontSize(6);
-
       const textoIngredientes = (`INGREDIENTES: ${ingredientes}`)
       const ingredientesQuebrados = wrapText(String(textoIngredientes), maxLineWidth, doc);
-
-
       doc.text(`${ingredientesQuebrados}`, 1, y + 33);
-      // doc.text(String(ingredientesQuebrados), 48, y - 36);
-
       doc.setFontSize(6);
-
       doc.setFont("helvetica", "bold");
       const textoAlergenicos = (`ALERGICOS: ${alergenicos}`)
       const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc);
-
       doc.text(`${alergenicosQuebrados}`, 1, y + 56);
       doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, y + 53);
-
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text(String(nomeProduto), 0.5, y - 4)
-
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
       doc.text("Fab.:", 2, 9);
       doc.text("Val.:", 2, 6);
-
       doc.text(formatDate(fabricacao), 10, 9);
       doc.text(formatDate(validade), 10, 6);
-
-
-
       doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 3);
-
-
-      // Adicionar selo de transgênico se selecionado
       if (transgenico) {
         doc.addImage(imgtransgenico, 'PNG', 39, 1, 10, 10);
       }
-
       switch (selo_alto_em) {
         case 'acucar':
           doc.addImage(acucar, 'PNG', 49.5, 1, 30, 10);
@@ -518,10 +448,13 @@ const EtiquetasLoja = () => {
           break;
         case 'acucarGordura':
           doc.addImage(acucarGordura, 'PNG', 49.5, 1, 30, 10);
+          break;
         case 'acucarSodio':
           doc.addImage(acucarSodio, 'PNG', 49.5, 1, 30, 10);
+          break;
         case 'sodioGordura':
           doc.addImage(sodioGordura, 'PNG', 49.5, 1, 30, 10);
+          break;
         case 'todos':
           doc.addImage(todos, 'PNG', 49.5, 1, 30, 10);
           break;
@@ -532,7 +465,7 @@ const EtiquetasLoja = () => {
     // Gerar o blob do PDF
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
-   
+
     // Cria um iframe oculto
     const iframe = document.createElement('iframe');
     iframe.style.position = 'absolute';
@@ -551,9 +484,8 @@ const EtiquetasLoja = () => {
 
     // Adiciona o iframe ao body para carregar o PDF
     document.body.appendChild(iframe);
+
   };
-
-
 
   const handleCriarProduto = () => {
     if (!validarCamposObrigatorios()) {
@@ -755,32 +687,11 @@ const EtiquetasLoja = () => {
       });
   };
 
-
   const handleSelectChange = (e) => {
     const selectedProductId = e.target.value; // O ID do produto selecionado
     const selectedProduct = produtos.find(p => p.id === parseInt(selectedProductId)); // Encontrar o produto pelo ID
     setItemSelecionado(selectedProduct); // Atualizar o estado com o produto selecionado
   };
-
-  // useEffect(() => {
-  //   async function buscarDiasValidade() {
-  //     if (!itemSelecionado || !itemSelecionado.id) return;
-
-  //     try {
-  //       const response = await axios.get(`http://192.168.1.168:4000/etiqueta/${itemSelecionado.id}`);
-  //       const diasValidade = response.data.validade; // Supondo que a API retorne { dias: 10 }
-
-  //       const dataFabricacao = new Date(fabricacao);
-  //       dataFabricacao.setDate(dataFabricacao.getDate() + diasValidade);
-
-  //       setValidade(dataFabricacao.toISOString().split('T')[0]);
-  //     } catch (error) {
-  //       console.error('Erro ao buscar validade:', error);
-  //     }
-  //   }
-
-  //   buscarDiasValidade();
-  // }, [itemSelecionado, fabricacao]);
 
   useEffect(() => {
     if (itemSelecionado && itemSelecionado.validade) {
@@ -792,11 +703,6 @@ const EtiquetasLoja = () => {
       }
     }
   }, [fabricacao, itemSelecionado]);
-
-
-
-
-
 
   return (
     <div className="container mt-4">
@@ -866,13 +772,11 @@ const EtiquetasLoja = () => {
           </Button>
         </div>
       </div>
-
       <div className='d-flex justify-content-start'>
 
 
         <Button variant="primary" className='me-2' onClick={gerarImpressao}
           disabled={!itemSelecionado}
-
         >Imprimir etiqueta</Button>
         <Button variant="success"
           onClick={handleCriar}
@@ -927,10 +831,6 @@ const EtiquetasLoja = () => {
           </div>
         </div>
       )}
-
-
-
-
       {showModal && (
         <div className="modal show" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.5)' }}>
           <div className="modal-dialog" style={{ minWidth: '600px', overflowY: 'auto' }}>
@@ -961,7 +861,6 @@ const EtiquetasLoja = () => {
                   />
                   {erros.produto && <small className="text-danger">Campo obrigatório</small>}
                 </div>
-
                 {/* Porção e Medida Caseira */}
                 <div>
                   <label>Porção (g)</label>
@@ -978,7 +877,6 @@ const EtiquetasLoja = () => {
                     style={{ maxWidth: '60px', border: erros.porcao ? '1px solid red' : undefined }}
                   />
                   {erros.porcao && <small className="text-danger">Campo obrigatório</small>}
-
                   <label>Medida caseira</label>
                   <input
                     type="text"
@@ -994,7 +892,6 @@ const EtiquetasLoja = () => {
                   />
                   {erros.caseira && <small className="text-danger">Campo obrigatório</small>}
                 </div>
-
                 {/* Tabela Nutricional */}
                 <table className="table">
                   <thead>
@@ -1069,7 +966,6 @@ const EtiquetasLoja = () => {
                     ))}
                   </tbody>
                 </table>
-
                 <div className='d-flex mb-3'>
                   <div className='me-4'>
                     <label>Ingredientes</label>
@@ -1189,8 +1085,7 @@ const EtiquetasLoja = () => {
                           }
                         }}
                         className="form-control"
-                        style={{ maxWidth: '110px', whiteSpace: 'nowrap', border: erros.selo_alto_em ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização                
-                      >
+                        style={{ maxWidth: '110px', whiteSpace: 'nowrap', border: erros.selo_alto_em ? '1px solid red' : undefined }}>
                         <option value="" disabled hidden>Selecione</option>
                         <option value="NULL">Não contém</option>
                         <option value="sodio">Sódio</option>
@@ -1198,51 +1093,15 @@ const EtiquetasLoja = () => {
                         <option value="acucar">Açucar</option>
                         <option value="acucarGordura">Açucar e Gordura</option>
                         <option value="sodioGordura">Sódio e Gordura</option>
-                        <option value="sodioAcucar">Sódio e Açucar</option>
+                        <option value="acucarSodio">Sódio e Açucar</option>
                         <option value="todos">Todos</option>
-
                       </select>
                       {erros.selo_alto_em && <small className="text-danger">Campo obrigatório</small>}
                     </div>
                   </div>
-
                 </div>
                 <div className='d-flex mb-3'>
-                  {/* <div className='me-4'>
-
-                    <label>Quantidade</label>
-                    <input
-                      type='number'
-                      value={quantidade}
-                      onChange={(e) => {
-                        setQuantidade(e.target.value);
-                        if (erros.quantidade && e.target.value.trim() !== '') {
-                          setErros(prev => ({ ...prev, quantidade: false }));
-                        }
-                      }}
-                      className="form-control"
-                      style={{ maxWidth: '60px', border: erros.quantidade ? '1px solid red' : undefined }}
-                    />
-                    {erros.quantidade && <small className="text-danger">Campo obrigatório</small>}
-                  </div> */}
-                  {/* <div className='me-4'>
-
-                    <label>Valor Unidade</label>
-                    <input
-                      value={valorQuant}
-                      onChange={(e) => {
-                        setValorQuant(e.target.value);
-                        if (erros.valorQuant && e.target.value.trim() !== '') {
-                          setErros(prev => ({ ...prev, valorQuant: false }));
-                        }
-                      }}
-                      className="form-control"
-                      style={{ maxWidth: '60px', border: erros.valorQuant ? '1px solid red' : undefined }}
-                    />
-                    {erros.valorQuant && <small className="text-danger">Campo obrigatório</small>}
-                  </div> */}
                   <div className='me-4'>
-
                     <label>Valor Total</label>
                     <input
                       value={valorTotal}
@@ -1258,7 +1117,6 @@ const EtiquetasLoja = () => {
                     {erros.porcao && <small className="text-danger">Campo obrigatório</small>}
                   </div>
                   <div className='me-4'>
-
                     <label>Validade em dias</label>
                     <input
                       type='number'
@@ -1292,11 +1150,7 @@ const EtiquetasLoja = () => {
           </div>
         </div>
       )}
-
-
-
     </div >
   );
 };
-
 export default EtiquetasLoja;
