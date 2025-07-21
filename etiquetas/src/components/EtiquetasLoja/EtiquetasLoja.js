@@ -532,20 +532,25 @@ const EtiquetasLoja = () => {
     // Gerar o blob do PDF
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
-    // PdfToImage (pdfUrl)
+   
+    // Cria um iframe oculto
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
 
-    // Verifica se a janela foi aberta com sucesso
-    const printWindow = window.open(pdfUrl);
+    // Defina o src do iframe para o PDF
+    iframe.src = pdfUrl;
 
-    if (printWindow) {
-      // Aguarda a janela carregar e então imprime
-      setTimeout(() => {
-        printWindow.focus();
-        // printWindow.print();
-      }, 500);
-    } else {
-      console.error("Não foi possível abrir a janela para impressão.");
-    }
+    // Quando o PDF estiver carregado, dispara a impressão
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    };
+
+    // Adiciona o iframe ao body para carregar o PDF
+    document.body.appendChild(iframe);
   };
 
 
