@@ -88,7 +88,6 @@ const EtiquetasLoja = () => {
   const [validade, setValidade] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [erros, setErros] = useState({});
-  const maxLineWidth = 45; // Defina o limite de largura em milímetros para a linha (ajuste conforme necessário)
 
   const wrapText = (text, maxWidth, doc) => {
     const words = text.split(" "); // Divide o texto em palavras
@@ -163,7 +162,7 @@ const EtiquetasLoja = () => {
     if (!isFieldValid(carbVD)) novosErros.carbVD = true;
     if (!isFieldValid(acucar100g)) novosErros.acucar100g = true;
     if (!isFieldValid(acucarg)) novosErros.acucarg = true;
-    if (!isFieldValid(acucarVD)) novosErros.acucarVD = true;
+    // if (!isFieldValid(acucarVD)) novosErros.acucarVD = true;
     if (!isFieldValid(acucarad100g)) novosErros.acucarad100g = true;
     if (!isFieldValid(acucaradg)) novosErros.acucaradg = true;
     if (!isFieldValid(acucaradVD)) novosErros.acucaradVD = true;
@@ -191,7 +190,7 @@ const EtiquetasLoja = () => {
     if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
     if (!isFieldValid(glutem)) novosErros.glutem = true;
     if (!isFieldValid(lactose)) novosErros.lactose = true;
-    // if (!isFieldValid(quantidade)) novosErros.quantidade = true;
+    if (!isFieldValid(quantidade)) novosErros.quantidade = true;
     // if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
     if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
     if (!isFieldValid(validade)) novosErros.validade = true;
@@ -265,7 +264,7 @@ const EtiquetasLoja = () => {
       return;
     }
 
-    axios.delete(`http://192.168.1.250/server-pascoa/etiquetas/${itemSelecionado.id}`)
+    axios.delete(`http://192.168.1.168:4000/etiquetas/${itemSelecionado.id}`)
       .then((response) => {
         console.log('Etiqueta excluída com sucesso:', response.data);
 
@@ -306,7 +305,7 @@ const EtiquetasLoja = () => {
   };
 
   const buscarProdutos = () => {
-    axios.get('http://192.168.1.250/server-pascoa/etiquetas')
+    axios.get('http://192.168.1.168:4000/etiquetas')
       .then(response => {
         setProdutos(response.data.etiquetas);
       })
@@ -367,22 +366,21 @@ const EtiquetasLoja = () => {
         { nome: 'Sódio (mg)', valor100g: sodio100g, valor120g: sodiog, VD: sodioVD },
       ];
 
-      const maxLineWidth = 220; // Largura máxima para ingredientes em mm
+      const maxLineWidth = 78; // Largura máxima para ingredientes em mm
 
       // Função para quebrar o texto automaticamente
       const wrapText = (text, maxWidth, doc) => {
-        const words = text.split(" "); // Divide o texto em palavras
+        const words = text.split(" ");
         let line = "";
         let lines = [];
 
         words.forEach(word => {
-          // Verifica se a palavra atual cabe na linha
           const testLine = line ? line + " " + word : word;
-          const width = doc.getStringUnitWidth(testLine) * doc.getFontSize();
-          // Se a largura exceder o limite, adiciona a linha e começa uma nova
+          const width = doc.getStringUnitWidth(testLine) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+
           if (width > maxWidth) {
             lines.push(line);
-            line = word; // Começa uma nova linha com a palavra atual
+            line = word;
           } else {
             line = testLine;
           }
@@ -390,73 +388,87 @@ const EtiquetasLoja = () => {
         lines.push(line);
         return lines.join("\n");
       };
+
       let y = 5;
       doc.setFont("helvetica", "normal");
       y += 8;
       y += 6;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7);
-      doc.text("INFORMAÇÃO NUTRICIONAL", 1, y + 1)
-      doc.line(1.5, y + 2, 78.5, y + 2)
+      doc.text("INFORMAÇÃO NUTRICIONAL", 1, y - 2.5)
       doc.setFont("helvetica", "normal");
-      doc.text(`Porções de ${String(porcao)} g (${String(caseira)})`, 1, y + 5);
+      doc.text(`Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`, 1, y + 0.5);
       doc.setLineWidth(0.8)
-      doc.line(1.5, y + 6.5, 78.5, y + 6.5)
+      doc.line(1.5, y + 2, 78.5, y + 2)
       doc.setLineWidth(0.2)
-      const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g, ${acucarVD}%), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
+      const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
       const textoQuebrado = wrapText(texto, maxLineWidth, doc);
-      doc.text(textoQuebrado, 1, y + 10);
-      doc.line(0.5, y - 2, 79.5, y - 2)
-      doc.line(1.5, y + 26, 78.5, y + 26)
-      doc.line(0.5, y + 30, 79.5, y + 30)
-      doc.line(0.5, y - 2, 0.5, y + 30)
-      doc.line(79.5, y - 2, 79.5, y + 30)
-      doc.text(`${valoresReferencia}.`, 1, y + 29)
+      doc.text(textoQuebrado, 1, y + 5);
+      doc.line(0.5, y - 5, 79.5, y - 5)
+      doc.line(1.5, y - 2, 78.5, y - 2)
+      doc.line(1.5, y + 20.3, 78.5, y + 20.3)
+      doc.line(0.5, y + 32, 79.5, y + 32)
+      doc.line(0.5, y - 5, 0.5, y + 32)
+      doc.line(79.5, y - 5, 79.5, y + 32)
+      doc.setFontSize(5.8)
+
+      if (armazenamento) {
+        const textoArmazenamento = wrapText(String(armazenamento), maxLineWidth, doc);
+        doc.text(textoArmazenamento, 1, y + 22.5);
+        doc.line(1.5, y + 26.5, 78.5, y + 26.5)
+        doc.setLineWidth(0.2)
+        const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
+        doc.text(textoReferencia, 1, y + 29)
+      }
+      else{
+        const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
+        doc.text(textoReferencia, 1, y + 22.5)
+      }
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6);
       const textoIngredientes = (`INGREDIENTES: ${ingredientes}`)
       const ingredientesQuebrados = wrapText(String(textoIngredientes), maxLineWidth, doc);
-      doc.text(`${ingredientesQuebrados}`, 1, y + 33);
+      doc.text(`${ingredientesQuebrados}`, 1, y + 34);
       doc.setFontSize(6);
       doc.setFont("helvetica", "bold");
       const textoAlergenicos = (`ALERGICOS: ${alergenicos}`)
       const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc);
       doc.text(`${alergenicosQuebrados}`, 1, y + 56);
-      doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, y + 53);
+      doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, y + 53.5);
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text(String(nomeProduto), 0.5, y - 4)
+      doc.text(String(nomeProduto), 0.5, y - 6)
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
-      doc.text("Fab.:", 2, 9);
-      doc.text("Val.:", 2, 6);
-      doc.text(formatDate(fabricacao), 10, 9);
-      doc.text(formatDate(validade), 10, 6);
-      doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 3);
+      doc.text("Fab.:", 2, 8.5);
+      doc.text("Val.:", 2, 5.5);
+      doc.text(formatDate(fabricacao), 10, 8.5);
+      doc.text(formatDate(validade), 10, 5.5);
+      doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 2.5);
       if (transgenico) {
-        doc.addImage(imgtransgenico, 'PNG', 39, 1, 10, 10);
+        doc.addImage(imgtransgenico, 'PNG', 45, 1, 8, 8);
       }
       switch (selo_alto_em) {
         case 'acucar':
-          doc.addImage(acucar, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(acucar, 'PNG', 54, 1, 25, 8);
           break;
         case 'gordura':
-          doc.addImage(gordura, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(gordura, 'PNG', 54, 1, 25, 8);
           break;
         case 'sodio':
-          doc.addImage(sodio, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(sodio, 'PNG', 54, 1, 25, 8);
           break;
         case 'acucarGordura':
-          doc.addImage(acucarGordura, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(acucarGordura, 'PNG', 54, 1, 25, 8);
           break;
         case 'acucarSodio':
-          doc.addImage(acucarSodio, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(acucarSodio, 'PNG', 54, 1, 25, 8);
           break;
         case 'sodioGordura':
-          doc.addImage(sodioGordura, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(sodioGordura, 'PNG', 54, 1, 25, 8);
           break;
         case 'todos':
-          doc.addImage(todos, 'PNG', 49.5, 1, 30, 10);
+          doc.addImage(todos, 'PNG', 54, 1, 25, 8);
           break;
         // e assim por diante...
       }
@@ -540,7 +552,7 @@ const EtiquetasLoja = () => {
     };
 
     // Enviando os dados para o backend (servidor Node.js)
-    axios.post('http://192.168.1.250/server-pascoa/etiquetas', novoProduto)
+    axios.post('http://192.168.1.168:4000/etiquetas', novoProduto)
       .then(response => {
         console.log('Produto criado com sucesso:', response.data);
         alert('Produto criado com sucesso!');
@@ -672,7 +684,7 @@ const EtiquetasLoja = () => {
 
     // Enviar os dados para o servidor usando a rota PUT
     axios
-      .put(`http://192.168.1.250/server-pascoa/etiquetas/${itemSelecionado.id}`, produtoEditado)
+      .put(`http://192.168.1.168:4000/etiquetas/${itemSelecionado.id}`, produtoEditado)
       .then((response) => {
         console.log('Produto atualizado com sucesso:', response.data);
         alert('Produto atualizado com sucesso!');
@@ -863,6 +875,20 @@ const EtiquetasLoja = () => {
                 </div>
                 {/* Porção e Medida Caseira */}
                 <div>
+                  <label>Porção por embalagem</label>
+                  <input
+                    type="text"
+                    value={quantidade}
+                    onChange={(e) => {
+                      setQuantidade(e.target.value);
+                      if (erros.quantidade && e.target.value.trim() !== '') {
+                        setErros(prev => ({ ...prev, quantidade: false }));
+                      }
+                    }}
+                    className="form-control"
+                    style={{ maxWidth: '60px', border: erros.quantidade ? '1px solid red' : undefined }}
+                  />
+                  {erros.quantidade && <small className="text-danger">Campo obrigatório</small>}
                   <label>Porção (g)</label>
                   <input
                     type="text"
@@ -1013,6 +1039,21 @@ const EtiquetasLoja = () => {
                       style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.alergenicos ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
                     />
                     {erros.alergenicos && <small className="text-danger">Campo obrigatório</small>}
+                  </div>
+                  <div className='me-4'>
+                    <label>Quantidades significativas</label>
+                    <textarea
+                      value={armazenamento}
+                      onChange={(e) => {
+                        setArmazenamento(e.target.value);
+                        if (erros.armazenamento && e.target.value.trim() !== '') {
+                          setErros(prev => ({ ...prev, armazenamento: false }));
+                        }
+                      }}
+                      className="form-control"
+                      style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.armazenamento ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
+                    />
+                    {erros.armazenamento && <small className="text-danger">Campo obrigatório</small>}
                   </div>
                 </div>
                 <div className='d-flex mb-3'>
