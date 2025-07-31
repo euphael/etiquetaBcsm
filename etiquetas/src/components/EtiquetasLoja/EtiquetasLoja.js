@@ -264,7 +264,7 @@ const EtiquetasLoja = () => {
       return;
     }
 
-    axios.delete(`http://192.168.1.168:4000/etiquetas/${itemSelecionado.id}`)
+    axios.delete(`http://192.168.1.250/server-pascoa/etiquetas/${itemSelecionado.id}`)
       .then((response) => {
         console.log('Etiqueta excluída com sucesso:', response.data);
 
@@ -305,7 +305,7 @@ const EtiquetasLoja = () => {
   };
 
   const buscarProdutos = () => {
-    axios.get('http://192.168.1.168:4000/etiquetas')
+    axios.get('http://192.168.1.250/server-pascoa/etiquetas')
       .then(response => {
         setProdutos(response.data.etiquetas);
       })
@@ -399,23 +399,23 @@ const EtiquetasLoja = () => {
       doc.setFont("helvetica", "normal");
       doc.text(`Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`, 1, y + 0.5);
       doc.setLineWidth(0.8)
-      doc.line(1.5, y + 2, 78.5, y + 2)
+      doc.line(1.5, y + 2, 78, y + 2)
       doc.setLineWidth(0.2)
       const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
       const textoQuebrado = wrapText(texto, maxLineWidth, doc);
       doc.text(textoQuebrado, 1, y + 5);
-      doc.line(0.5, y - 5, 79.5, y - 5)
-      doc.line(1.5, y - 2, 78.5, y - 2)
-      doc.line(1.5, y + 20.3, 78.5, y + 20.3)
-      doc.line(0.5, y + 32, 79.5, y + 32)
+      doc.line(0.5, y - 5, 79, y - 5)
+      doc.line(1.5, y - 2, 78, y - 2)
+      doc.line(1.5, y + 20.3, 78, y + 20.3)
+      doc.line(0.5, y + 32, 79, y + 32)
       doc.line(0.5, y - 5, 0.5, y + 32)
-      doc.line(79.5, y - 5, 79.5, y + 32)
+      doc.line(79, y - 5, 79, y + 32)
       doc.setFontSize(5.8)
 
       if (armazenamento) {
         const textoArmazenamento = wrapText(String(armazenamento), maxLineWidth, doc);
         doc.text(textoArmazenamento, 1, y + 22.5);
-        doc.line(1.5, y + 26.5, 78.5, y + 26.5)
+        doc.line(1.5, y + 26.5, 78, y + 26.5)
         doc.setLineWidth(0.2)
         const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
         doc.text(textoReferencia, 1, y + 29)
@@ -446,29 +446,29 @@ const EtiquetasLoja = () => {
       doc.text(formatDate(validade), 10, 5.5);
       doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 2.5);
       if (transgenico) {
-        doc.addImage(imgtransgenico, 'PNG', 45, 1, 8, 8);
+        doc.addImage(imgtransgenico, 'PNG', 45, 0.5, 8, 8);
       }
       switch (selo_alto_em) {
         case 'acucar':
-          doc.addImage(acucar, 'PNG', 54, 1, 25, 8);
+          doc.addImage(acucar, 'PNG', 53.5, 0.5, 25, 8);
           break;
         case 'gordura':
-          doc.addImage(gordura, 'PNG', 54, 1, 25, 8);
+          doc.addImage(gordura, 'PNG', 53.5, 0.5, 25, 8);
           break;
         case 'sodio':
-          doc.addImage(sodio, 'PNG', 54, 1, 25, 8);
+          doc.addImage(sodio, 'PNG', 53.5, 0.5, 25, 8);
           break;
         case 'acucarGordura':
-          doc.addImage(acucarGordura, 'PNG', 54, 1, 25, 8);
+          doc.addImage(acucarGordura, 'PNG', 54, 0.5, 25, 8);
           break;
         case 'acucarSodio':
-          doc.addImage(acucarSodio, 'PNG', 54, 1, 25, 8);
+          doc.addImage(acucarSodio, 'PNG', 53.5, 0.5, 25, 8);
           break;
         case 'sodioGordura':
-          doc.addImage(sodioGordura, 'PNG', 54, 1, 25, 8);
+          doc.addImage(sodioGordura, 'PNG', 53.5, 0.5, 25, 8);
           break;
         case 'todos':
-          doc.addImage(todos, 'PNG', 54, 1, 25, 8);
+          doc.addImage(todos, 'PNG', 53.5, 0.5, 25, 8);
           break;
         // e assim por diante...
       }
@@ -552,7 +552,7 @@ const EtiquetasLoja = () => {
     };
 
     // Enviando os dados para o backend (servidor Node.js)
-    axios.post('http://192.168.1.168:4000/etiquetas', novoProduto)
+    axios.post('http://192.168.1.250/server-pascoa/etiquetas', novoProduto)
       .then(response => {
         console.log('Produto criado com sucesso:', response.data);
         alert('Produto criado com sucesso!');
@@ -684,7 +684,7 @@ const EtiquetasLoja = () => {
 
     // Enviar os dados para o servidor usando a rota PUT
     axios
-      .put(`http://192.168.1.168:4000/etiquetas/${itemSelecionado.id}`, produtoEditado)
+      .put(`http://192.168.1.250/server-pascoa/etiquetas/${itemSelecionado.id}`, produtoEditado)
       .then((response) => {
         console.log('Produto atualizado com sucesso:', response.data);
         alert('Produto atualizado com sucesso!');
