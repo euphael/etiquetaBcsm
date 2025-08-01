@@ -194,8 +194,8 @@ const EtiquetasLoja = () => {
     // if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
     if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
     if (!isFieldValid(validade)) novosErros.validade = true;
-    if (!isFieldValid(transgenico)) novosErros.transgenico = true;
-    if (!isFieldValid(selo_alto_em)) novosErros.selo_alto_em = true;
+    // if (!isFieldValid(transgenico)) novosErros.transgenico = true;
+    // if (!isFieldValid(selo_alto_em)) novosErros.selo_alto_em = true;
 
 
     setErros(novosErros);
@@ -420,7 +420,7 @@ const EtiquetasLoja = () => {
         const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
         doc.text(textoReferencia, 1, y + 29)
       }
-      else{
+      else {
         const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
         doc.text(textoReferencia, 1, y + 22.5)
       }
@@ -446,7 +446,11 @@ const EtiquetasLoja = () => {
       doc.text(formatDate(validade), 10, 5.5);
       doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 2.5);
       if (transgenico) {
-        doc.addImage(imgtransgenico, 'PNG', 45, 0.5, 8, 8);
+        if (selo_alto_em !== '') {
+          doc.addImage(imgtransgenico, 'PNG', 45, 0.5, 8, 8);
+        } else {
+          doc.addImage(imgtransgenico, 'PNG', 70.5, 0.5, 8, 8);
+        }
       }
       switch (selo_alto_em) {
         case 'acucar':
@@ -845,7 +849,7 @@ const EtiquetasLoja = () => {
       )}
       {showModal && (
         <div className="modal show" style={{ display: 'block', background: 'rgba(0, 0, 0, 0.5)' }}>
-          <div className="modal-dialog" style={{ minWidth: '600px', overflowY: 'auto' }}>
+          <div className="modal-dialog" style={{ minWidth: '800px', overflowY: 'auto' }}>
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{modoEdicao ? 'Editar Etiqueta' : 'Criar Etiqueta'}</h5>
@@ -992,7 +996,8 @@ const EtiquetasLoja = () => {
                     ))}
                   </tbody>
                 </table>
-                <div className='d-flex mb-3'>
+                <div className='d-flex mb-3'
+                  style={{ justifyContent: 'space-evenly' }}>
                   <div className='me-4'>
                     <label>Ingredientes</label>
                     <textarea
@@ -1004,7 +1009,7 @@ const EtiquetasLoja = () => {
                         }
                       }}
                       className="form-control"
-                      style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.ingredientes ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
+                      style={{ width: '350px', minHeight: '200px', whiteSpace: 'pre-wrap', border: erros.ingredientes ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
                     />
                     {erros.ingredientes && <small className="text-danger">Campo obrigatório</small>}
                   </div>
@@ -1019,12 +1024,13 @@ const EtiquetasLoja = () => {
                         }
                       }}
                       className="form-control"
-                      style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.valoresReferencia ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
+                      style={{ width: '350px', minHeight: '200px', whiteSpace: 'pre-wrap', border: erros.valoresReferencia ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
                     />
                     {erros.valoresReferencia && <small className="text-danger">Campo obrigatório</small>}
                   </div>
                 </div>
-                <div className='d-flex'>
+                <div className='d-flex'
+                  style={{ justifyContent: 'space-evenly' }}>
                   <div className='me-4'>
                     <label>Alergenicos</label>
                     <textarea
@@ -1036,7 +1042,7 @@ const EtiquetasLoja = () => {
                         }
                       }}
                       className="form-control"
-                      style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.alergenicos ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
+                      style={{ width: '350px', minHeight: '200px', whiteSpace: 'pre-wrap', border: erros.alergenicos ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
                     />
                     {erros.alergenicos && <small className="text-danger">Campo obrigatório</small>}
                   </div>
@@ -1051,12 +1057,13 @@ const EtiquetasLoja = () => {
                         }
                       }}
                       className="form-control"
-                      style={{ width: '250px', minHeight: '100px', whiteSpace: 'nowrap', border: erros.armazenamento ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
+                      style={{ width: '350px', minHeight: '200px', whiteSpace: 'pre-wrap', border: erros.armazenamento ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização
                     />
                     {erros.armazenamento && <small className="text-danger">Campo obrigatório</small>}
                   </div>
                 </div>
-                <div className='d-flex mb-3'>
+                <div className='d-flex mb-3'
+                  style={{ justifyContent: 'space-evenly' }}>
                   <div className='me-2'>
                     <label>Glútem</label>
                     <select
@@ -1095,53 +1102,52 @@ const EtiquetasLoja = () => {
                     </select>
                     {erros.lactose && <small className="text-danger">Campo obrigatório</small>}
                   </div>
-                  <div className='d-flex mb-3'>
-                    <div className='me-2'>
-                      <label>Transgenicos</label>
-                      <select
-                        value={transgenico}
-                        onChange={(e) => {
-                          setTransgenico(e.target.value);
-                          if (erros.transgenico && e.target.value.trim() !== '') {
-                            setErros(prev => ({ ...prev, transgenico: false }));
-                          }
-                        }}
-                        className="form-control"
-                        style={{ maxWidth: '110px', whiteSpace: 'nowrap', border: erros.transgenico ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização                
-                      >
-                        <option value="" disabled hidden>Selecione</option>
-                        <option value='1'>Contém</option>
-                        <option value='0'>Não Contém</option>
-                      </select>
-                      {erros.transgenico && <small className="text-danger">Campo obrigatório</small>}
-                    </div>
-                    <div className='me-2'>
-                      <label>Alto em</label>
-                      <select
-                        value={selo_alto_em}
-                        onChange={(e) => {
-                          setselo_alto_em(e.target.value);
-                          if (erros.selo_alto_em && e.target.value.trim() !== '') {
-                            setErros(prev => ({ ...prev, selo_alto_em: false }));
-                          }
-                        }}
-                        className="form-control"
-                        style={{ maxWidth: '110px', whiteSpace: 'nowrap', border: erros.selo_alto_em ? '1px solid red' : undefined }}>
-                        <option value="" disabled hidden>Selecione</option>
-                        <option value="NULL">Não contém</option>
-                        <option value="sodio">Sódio</option>
-                        <option value="gordura">Gordura</option>
-                        <option value="acucar">Açucar</option>
-                        <option value="acucarGordura">Açucar e Gordura</option>
-                        <option value="sodioGordura">Sódio e Gordura</option>
-                        <option value="acucarSodio">Sódio e Açucar</option>
-                        <option value="todos">Todos</option>
-                      </select>
-                      {erros.selo_alto_em && <small className="text-danger">Campo obrigatório</small>}
-                    </div>
+                  <div className='me-2'>
+                    <label>Transgenicos</label>
+                    <select
+                      value={transgenico}
+                      onChange={(e) => {
+                        setTransgenico(e.target.value);
+                        if (erros.transgenico && e.target.value.trim() !== '') {
+                          setErros(prev => ({ ...prev, transgenico: false }));
+                        }
+                      }}
+                      className="form-control"
+                      style={{ maxWidth: '110px', whiteSpace: 'nowrap', border: erros.transgenico ? '1px solid red' : undefined }} // Aumenta a altura para uma boa visualização                
+                    >
+                      <option value="" disabled hidden>Selecione</option>
+                      <option value='1'>Contém</option>
+                      <option value='0'>Não Contém</option>
+                    </select>
+                    {erros.transgenico && <small className="text-danger">Campo obrigatório</small>}
+                  </div>
+                  <div className='me-2'>
+                    <label>Alto em</label>
+                    <select
+                      value={selo_alto_em}
+                      onChange={(e) => {
+                        setselo_alto_em(e.target.value);
+                        if (erros.selo_alto_em && e.target.value.trim() !== '') {
+                          setErros(prev => ({ ...prev, selo_alto_em: false }));
+                        }
+                      }}
+                      className="form-control"
+                      style={{ maxWidth: '110px', whiteSpace: 'nowrap', border: erros.selo_alto_em ? '1px solid red' : undefined }}>
+                      <option value="" disabled hidden>Selecione</option>
+                      <option value="">Não contém</option>
+                      <option value="sodio">Sódio</option>
+                      <option value="gordura">Gordura</option>
+                      <option value="acucar">Açucar</option>
+                      <option value="acucarGordura">Açucar e Gordura</option>
+                      <option value="sodioGordura">Sódio e Gordura</option>
+                      <option value="acucarSodio">Sódio e Açucar</option>
+                      <option value="todos">Todos</option>
+                    </select>
+                    {erros.selo_alto_em && <small className="text-danger">Campo obrigatório</small>}
                   </div>
                 </div>
-                <div className='d-flex mb-3'>
+                <div className='d-flex mb-3'
+                  style={{ justifyContent: 'space-evenly' }}>
                   <div className='me-4'>
                     <label>Valor Total</label>
                     <input
@@ -1153,7 +1159,7 @@ const EtiquetasLoja = () => {
                         }
                       }}
                       className="form-control"
-                      style={{ maxWidth: '60px', border: erros.valorTotal ? '1px solid red' : undefined }}
+                      style={{ maxWidth: '80px', border: erros.valorTotal ? '1px solid red' : undefined }}
                     />
                     {erros.porcao && <small className="text-danger">Campo obrigatório</small>}
                   </div>
@@ -1169,7 +1175,7 @@ const EtiquetasLoja = () => {
                         }
                       }}
                       className="form-control"
-                      style={{ maxWidth: '60px', border: erros.validade ? '1px solid red' : undefined }}
+                      style={{ maxWidth: '80px', border: erros.validade ? '1px solid red' : undefined }}
                     />
                     {erros.validade && <small className="text-danger">Campo obrigatório</small>}
                   </div>
