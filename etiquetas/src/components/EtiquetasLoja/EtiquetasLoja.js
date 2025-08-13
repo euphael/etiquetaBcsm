@@ -187,7 +187,7 @@ const EtiquetasLoja = () => {
     if (!isFieldValid(ingredientes)) novosErros.ingredientes = true;
     if (!isFieldValid(valoresReferencia)) novosErros.valoresReferencia = true;
     // if (!isFieldValid(armazenamento)) novosErros.armazenamento = true;
-    if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
+    // if (!isFieldValid(alergenicos)) novosErros.alergenicos = true;
     if (!isFieldValid(glutem)) novosErros.glutem = true;
     if (!isFieldValid(lactose)) novosErros.lactose = true;
     if (!isFieldValid(quantidade)) novosErros.quantidade = true;
@@ -431,9 +431,11 @@ const EtiquetasLoja = () => {
       doc.text(`${ingredientesQuebrados}`, 1, y + 34);
       doc.setFontSize(6);
       doc.setFont("helvetica", "bold");
-      const textoAlergenicos = (`ALERGICOS: ${alergenicos}`)
-      const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc);
-      doc.text(`${alergenicosQuebrados}`, 1, y + 56);
+      if(alergenicos){
+        const textoAlergenicos = (`ALERGICOS: ${alergenicos}`)
+        const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc);
+        doc.text(`${alergenicosQuebrados}`, 1, y + 56);
+      }
       doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, y + 53.5);
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
