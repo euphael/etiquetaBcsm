@@ -407,56 +407,91 @@ const EtiquetasLoja = () => {
       doc.line(0.5, y - 5, 79, y - 5)
       doc.line(1.5, y - 2, 78, y - 2)
       doc.line(1.5, y + 20.3, 78, y + 20.3)
-      doc.line(0.5, y + 32, 79, y + 32)
-      doc.line(0.5, y - 5, 0.5, y + 32)
-      doc.line(79, y - 5, 79, y + 32)
       doc.setFontSize(5.8)
 
+      let posY
+
       if (armazenamento) {
+        // ARMAZENAMENTO
         const textoArmazenamento = wrapText(String(armazenamento), maxLineWidth, doc);
-        doc.text(textoArmazenamento, 1, y + 22.5);
-        doc.line(1.5, y + 26.5, 78, y + 26.5)
-        doc.setLineWidth(0.2)
+        const linhasArmazenamento = textoArmazenamento.split("\n");
+
+        linhasArmazenamento.forEach((linha, i) => {
+          doc.text(linha, 1, y + 22.5 + (i * 2)); // espaçamento de 5 por linha
+        });
+
+        // posição após bloco de armazenamento
+        posY = y + 22.5 + (linhasArmazenamento.length * 2);
+
+        // linha separadora
+        doc.line(1.5, posY - 1, 78, posY - 1);
+        doc.setLineWidth(0.2);
+
+        // REFERÊNCIA
         const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
-        doc.text(textoReferencia, 1, y + 29)
-      }
-      else {
+        const linhasReferencia = textoReferencia.split("\n");
+
+        linhasReferencia.forEach((linha, i) => {
+          doc.text(linha, 1, posY +1+ (i * 2));
+        });
+
+        posY +=  (linhasReferencia.length * 2);
+
+        // bordas
+        doc.line(0.5, y - 5, 0.5, posY);
+        doc.line(79, y - 5, 79, posY);
+        doc.line(0.5, posY, 79, posY);
+
+      } else {
+        // REFERÊNCIA sem armazenamento
         const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
-        doc.text(textoReferencia, 1, y + 22.5)
+        const linhasReferencia = textoReferencia.split("\n");
+
+        linhasReferencia.forEach((linha, i) => {
+          doc.text(linha, 1, y + 22.5 + (i * 2));
+        });
+
+        posY = y + 22.5 + (linhasReferencia.length * 2);
+
+        // bordas
+        doc.line(0.5, y - 5, 0.5, posY);
+        doc.line(79, y - 5, 79, posY);
+        doc.line(0.5, posY, 79, posY);
       }
+      
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6);
       const textoIngredientes = (`INGREDIENTES: ${ingredientes}`)
-     
+
       doc.setFontSize(6);
       // Ingredientes
       const ingredientesQuebrados = wrapText(String(textoIngredientes), maxLineWidth, doc).split("\n");
-      
+      posY += 2.5
       ingredientesQuebrados.forEach((linha, i) => {
-        doc.text(linha, 1, y + 34 + (i * 2.2)); // 5 = espaçamento entre linhas
+        doc.text(linha, 1, posY + (i * 2.2)); // 5 = espaçamento entre linhas
       });
       doc.setFont("helvetica", "bold");
 
-// pega a última posição ocupada
-let posicaoY = y + 34 + (ingredientesQuebrados.length * 2);
+      // pega a última posição ocupada
+      let posicaoY = posY + (ingredientesQuebrados.length * 2);
 
-// Glúten / Lactose
-doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, posicaoY +1.5);
+      // Glúten / Lactose
+      doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, posicaoY + 1.5);
 
-// atualiza posição
-posicaoY += 4;
+      // atualiza posição
+      posicaoY += 4;
 
-// Alérgicos
-if (alergenicos) {
-  const textoAlergenicos = `ALÉRGICOS: ${alergenicos}`;
-  const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc).split("\n");
+      // Alérgicos
+      if (alergenicos) {
+        const textoAlergenicos = `ALÉRGICOS: ${alergenicos}`;
+        const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc).split("\n");
 
-  alergenicosQuebrados.forEach((linha, i) => {
-    doc.text(linha, 1, posicaoY + (i * 2.5));
-  });
+        alergenicosQuebrados.forEach((linha, i) => {
+          doc.text(linha, 1, posicaoY + (i * 2.5));
+        });
 
-  // atualiza posição para uso futuro
-}
+        // atualiza posição para uso futuro
+      }
 
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
