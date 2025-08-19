@@ -427,16 +427,37 @@ const EtiquetasLoja = () => {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6);
       const textoIngredientes = (`INGREDIENTES: ${ingredientes}`)
-      const ingredientesQuebrados = wrapText(String(textoIngredientes), maxLineWidth, doc);
-      doc.text(`${ingredientesQuebrados}`, 1, y + 34);
+     
       doc.setFontSize(6);
+      // Ingredientes
+      const ingredientesQuebrados = wrapText(String(textoIngredientes), maxLineWidth, doc).split("\n");
+      
+      ingredientesQuebrados.forEach((linha, i) => {
+        doc.text(linha, 1, y + 34 + (i * 2.2)); // 5 = espaçamento entre linhas
+      });
       doc.setFont("helvetica", "bold");
-      if(alergenicos){
-        const textoAlergenicos = (`ALERGICOS: ${alergenicos}`)
-        const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc);
-        doc.text(`${alergenicosQuebrados}`, 1, y + 56);
-      }
-      doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, y + 53.5);
+
+// pega a última posição ocupada
+let posicaoY = y + 34 + (ingredientesQuebrados.length * 2);
+
+// Glúten / Lactose
+doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, posicaoY +1.5);
+
+// atualiza posição
+posicaoY += 4;
+
+// Alérgicos
+if (alergenicos) {
+  const textoAlergenicos = `ALÉRGICOS: ${alergenicos}`;
+  const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc).split("\n");
+
+  alergenicosQuebrados.forEach((linha, i) => {
+    doc.text(linha, 1, posicaoY + (i * 2.5));
+  });
+
+  // atualiza posição para uso futuro
+}
+
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text(String(nomeProduto), 0.5, y - 6)
