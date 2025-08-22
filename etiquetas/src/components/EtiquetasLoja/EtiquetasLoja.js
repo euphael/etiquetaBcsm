@@ -592,7 +592,7 @@ const EtiquetasLoja = () => {
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "mm",
-      format: [70, 80]
+      format: [80, 80]
     });
 
     const {
@@ -1139,7 +1139,7 @@ const EtiquetasLoja = () => {
           disabled={!itemSelecionado}
         >Imprimir etiqueta</Button>
         <Button variant="primary" className='me-2' onClick={gerarImpressaoAraujo}
-          disabled={!itemSelecionado}
+          disabled={!isLoggedIn || !itemSelecionado}
         >Imprimir etiqueta Araujo</Button>
         <Button variant="success"
           onClick={handleCriar}
