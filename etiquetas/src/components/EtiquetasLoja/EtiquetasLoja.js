@@ -359,7 +359,7 @@ const EtiquetasLoja = () => {
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "mm",
-      format: [70, 80]
+      format: [80, 80]
     });
 
     const {
