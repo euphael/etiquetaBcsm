@@ -14,6 +14,8 @@ import sodio from '../assets/sodio.png';
 import sodioGordura from '../assets/sodioGordura.png';
 import todos from '../assets/todos.png';
 import imgtransgenico from '../assets/transgenicos.png';
+import JsBarcode from "jsbarcode";
+
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -149,6 +151,31 @@ const EtiquetasLoja = () => {
     const isFieldValid = (value) => {
       return value !== null && value !== undefined && value !== '';  // Permite 0 como valor válido
     };
+    function isValidEAN(code) {
+      if (!code) return true; // nulo, undefined ou string vazia
+      if (!/^\d+$/.test(code)) return false; // só números
+
+      const len = code.length;
+      if (len !== 8 && len !== 13) return false; // só EAN-8 ou EAN-13
+
+      // separar dígito verificador
+      const digits = code.split("").map(Number);
+      const checkDigit = digits.pop();
+
+      // cálculo do dígito esperado
+      let sum = 0;
+      for (let i = digits.length - 1; i >= 0; i--) {
+        let num = digits[i];
+        if ((digits.length - i) % 2 === (len === 13 ? 1 : 0)) {
+          num *= 3; // peso 3 nas posições certas
+        }
+        sum += num;
+      }
+      const expectedCheck = (10 - (sum % 10)) % 10;
+
+      return checkDigit === expectedCheck;
+    }
+
 
     // Verificar todos os campos
     if (!isFieldValid(produto)) novosErros.produto = true;
@@ -191,7 +218,7 @@ const EtiquetasLoja = () => {
     if (!isFieldValid(glutem)) novosErros.glutem = true;
     if (!isFieldValid(lactose)) novosErros.lactose = true;
     if (!isFieldValid(quantidade)) novosErros.quantidade = true;
-    // if (!isFieldValid(valorQuant)) novosErros.valorQuant = true;
+    if (!isValidEAN(valorQuant)) novosErros.valorQuant = true;
     if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
     if (!isFieldValid(validade)) novosErros.validade = true;
     // if (!isFieldValid(transgenico)) novosErros.transgenico = true;
@@ -332,7 +359,7 @@ const EtiquetasLoja = () => {
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "mm",
-      format: [80, 80]
+      format: [70, 80]
     });
 
     const {
@@ -432,10 +459,10 @@ const EtiquetasLoja = () => {
         const linhasReferencia = textoReferencia.split("\n");
 
         linhasReferencia.forEach((linha, i) => {
-          doc.text(linha, 1, posY +1+ (i * 2));
+          doc.text(linha, 1, posY + 1 + (i * 2));
         });
 
-        posY +=  (linhasReferencia.length * 2);
+        posY += (linhasReferencia.length * 2);
 
         // bordas
         doc.line(0.5, y - 5, 0.5, posY);
@@ -458,7 +485,7 @@ const EtiquetasLoja = () => {
         doc.line(79, y - 5, 79, posY);
         doc.line(0.5, posY, 79, posY);
       }
-      
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(6);
       const textoIngredientes = (`INGREDIENTES: ${ingredientes}`)
@@ -534,6 +561,265 @@ const EtiquetasLoja = () => {
           break;
         // e assim por diante...
       }
+
+    }
+    // Gerar o blob do PDF
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    // Cria um iframe oculto
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+
+    // Defina o src do iframe para o PDF
+    iframe.src = pdfUrl;
+
+    // Quando o PDF estiver carregado, dispara a impressão
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    };
+
+    // Adiciona o iframe ao body para carregar o PDF
+    document.body.appendChild(iframe);
+
+  };
+  const gerarImpressaoAraujo = () => {
+    // Cria PDF com tamanho padrão (A4 landscape)
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: [70, 80]
+    });
+
+    const {
+      produto, porcao, caseira, energia100g, energiag, energiaVD, carb100g, carbg, carbVD,
+      acucar100g, acucarg, acucarVD, acucarad100g, acucaradg, acucaradVD,
+      proteina100g, proteinag, proteinaVD, gorduraTotal100g, gorduraTotalg,
+      gorduraTotalVD, gorduraSaturada100g, gorduraSaturadag, gorduraSaturadaVD,
+      gorduraTrans100g, gorduraTransg, gorduraTransVD, fibra100g, fibrag,
+      fibraVD, sodio100g, sodiog, sodioVD, ingredientes, glutem, armazenamento,
+      quantidade, valorQuant, valorTotal, alergenicos, valoresReferencia, lactose,
+      selo_alto_em, transgenico
+    } = itemSelecionado;
+
+    for (let copia = 0; copia < quantidadeEtiquetas; copia++) { // Gerar as etiquetas com a quantidade especificada
+      if (copia > 0) doc.addPage();
+
+      // Convertendo todos os valores para strings
+      const nomeProduto = String(produto);
+
+
+      const informacoesNutricionais = [
+        { nome: 'Valor energético (kcal)', valor100g: energia100g, valor120g: energiag, VD: energiaVD },
+        { nome: 'Carboidratos (g)', valor100g: carb100g, valor120g: carbg, VD: carbVD },
+        { nome: ' Açúcares totais (g)', valor100g: acucar100g, valor120g: acucarg, VD: acucarVD },
+        { nome: '  Açúcares adicionados (g)', valor100g: acucarad100g, valor120g: acucaradg, VD: acucaradVD },
+        { nome: 'Proteínas (g)', valor100g: proteina100g, valor120g: proteinag, VD: proteinaVD },
+        { nome: 'Gorduras totais (g)', valor100g: gorduraTotal100g, valor120g: gorduraTotalg, VD: gorduraTotalVD },
+        { nome: ' Gorduras saturadas (g)', valor100g: gorduraSaturada100g, valor120g: gorduraSaturadag, VD: gorduraSaturadaVD },
+        { nome: ' Gorduras trans (g)', valor100g: gorduraTrans100g, valor120g: gorduraTransg, VD: gorduraTransVD },
+        { nome: 'Fibras alimentares (g)', valor100g: fibra100g, valor120g: fibrag, VD: fibraVD },
+        { nome: 'Sódio (mg)', valor100g: sodio100g, valor120g: sodiog, VD: sodioVD },
+      ];
+
+      const maxLineWidth = 78; // Largura máxima para ingredientes em mm
+
+      // Função para quebrar o texto automaticamente
+      const wrapText = (text, maxWidth, doc) => {
+        const words = text.split(" ");
+        let line = "";
+        let lines = [];
+
+        words.forEach(word => {
+          const testLine = line ? line + " " + word : word;
+          const width = doc.getStringUnitWidth(testLine) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+
+          if (width > maxWidth) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = testLine;
+          }
+        });
+        lines.push(line);
+        return lines.join("\n");
+      };
+
+      let y = 10
+      doc.setFont("helvetica", "normal");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.text("INFORMAÇÃO NUTRICIONAL", 1, y - 2.5)
+      doc.setFont("helvetica", "normal");
+      doc.text(`Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`, 1, y + 0.5);
+      doc.setLineWidth(0.8)
+      doc.line(1.5, y + 2, 78, y + 2)
+      doc.setLineWidth(0.2)
+      const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
+      const textoQuebrado = wrapText(texto, maxLineWidth, doc);
+      doc.text(textoQuebrado, 1, y + 5);
+      doc.line(0.5, y - 5, 79, y - 5)
+      doc.line(1.5, y - 2, 78, y - 2)
+      doc.line(1.5, y + 20.3, 78, y + 20.3)
+      doc.setFontSize(5.8)
+
+      let posY
+
+      if (armazenamento) {
+        // ARMAZENAMENTO
+        const textoArmazenamento = wrapText(String(armazenamento), maxLineWidth, doc);
+        const linhasArmazenamento = textoArmazenamento.split("\n");
+
+        linhasArmazenamento.forEach((linha, i) => {
+          doc.text(linha, 1, y + 22.5 + (i * 2)); // espaçamento de 5 por linha
+        });
+
+        // posição após bloco de armazenamento
+        posY = y + 22.5 + (linhasArmazenamento.length * 2);
+
+        // linha separadora
+        doc.line(1.5, posY - 1, 78, posY - 1);
+        doc.setLineWidth(0.2);
+
+        // REFERÊNCIA
+        const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
+        const linhasReferencia = textoReferencia.split("\n");
+
+        linhasReferencia.forEach((linha, i) => {
+          doc.text(linha, 1, posY + 1 + (i * 2));
+        });
+
+        posY += (linhasReferencia.length * 2);
+
+        // bordas
+        doc.line(0.5, y - 5, 0.5, posY);
+        doc.line(79, y - 5, 79, posY);
+        doc.line(0.5, posY, 79, posY);
+
+      } else {
+        // REFERÊNCIA sem armazenamento
+        const textoReferencia = wrapText(String(valoresReferencia), maxLineWidth, doc);
+        const linhasReferencia = textoReferencia.split("\n");
+
+        linhasReferencia.forEach((linha, i) => {
+          doc.text(linha, 1, y + 22.5 + (i * 2));
+        });
+
+        posY = y + 22.5 + (linhasReferencia.length * 2);
+
+        // bordas
+        doc.line(0.5, y - 5, 0.5, posY);
+        doc.line(79, y - 5, 79, posY);
+        doc.line(0.5, posY, 79, posY);
+      }
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6);
+      const textoIngredientes = (`INGREDIENTES: ${ingredientes}`)
+
+      doc.setFontSize(6);
+      // Ingredientes
+      const ingredientesQuebrados = wrapText(String(textoIngredientes), maxLineWidth, doc).split("\n");
+      posY += 2.5
+      ingredientesQuebrados.forEach((linha, i) => {
+        doc.text(linha, 1, posY + (i * 2.2)); // 5 = espaçamento entre linhas
+      });
+      doc.setFont("helvetica", "bold");
+
+      // pega a última posição ocupada
+      let posicaoY = posY + (ingredientesQuebrados.length * 2);
+
+      // Glúten / Lactose
+      doc.text(`${String(glutem)} GLÚTEN. | ${String(lactose)} LACTOSE.`, 1, posicaoY + 1.5);
+
+      // atualiza posição
+      posicaoY += 4;
+
+      // Alérgicos
+      if (alergenicos) {
+        const textoAlergenicos = `ALÉRGICOS: ${alergenicos}`;
+        const alergenicosQuebrados = wrapText(String(textoAlergenicos), maxLineWidth, doc).split("\n");
+
+        alergenicosQuebrados.forEach((linha, i) => {
+          doc.text(linha, 1, posicaoY + (i * 2.5));
+        });
+
+        // atualiza posição para uso futuro
+        posicaoY += (alergenicosQuebrados.length * 2.5);
+
+      }
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(nomeProduto), 0.5, y - 6)
+      doc.setFontSize(5);
+      doc.setFont("helvetica", "normal");
+      doc.text('Produzido por: Solar Das Festas LTDA.\nRua Marabá, 122 - Santo Antônio CEP: 30350-160\nBelo Horizonte - MG - Brasil CNPJ:41.922.238/0001-51\nAtendimento ao consumidor: (31) 3526-3131', 1, posicaoY)
+      doc.text("Fab.:", 1, posicaoY + 8.5);
+      doc.text("Val.:", 1, posicaoY + 10.5);
+      doc.text(formatDate(fabricacao), 6, posicaoY + 8.5);
+      doc.text(formatDate(validade), 6, posicaoY + 10.5);
+      if (valorQuant) {
+
+        const base12 = valorQuant;
+        const codigo = base12;
+        const scale = 3;
+
+        // gerar barcode em canvas
+        const canvas = document.createElement("canvas");
+        canvas.width = 60;   // largura em pixels
+        canvas.height = 20;
+        JsBarcode(canvas, codigo, {
+
+          format: "EAN13",
+          displayValue: true,
+          fontSize: 14 * scale,
+          width: 2 * scale, // largura das barras
+          height: 80 * scale,
+          margin: 0,
+        });
+
+        // converter para imagem base64
+        const imgData = canvas.toDataURL("image/png");
+        doc.addImage(imgData, "PNG", 45, posicaoY - 1.5, 33, 12);
+      }
+
+      // doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 2.5);
+      // if (transgenico) {
+      //   if (selo_alto_em !== '') {
+      //     doc.addImage(imgtransgenico, 'PNG', 45, 0.5, 8, 8);
+      //   } else {
+      //     doc.addImage(imgtransgenico, 'PNG', 70.5, 0.5, 8, 8);
+      //   }
+      // }
+      // switch (selo_alto_em) {
+      //   case 'acucar':
+      //     doc.addImage(acucar, 'PNG', 53.5, 0.5, 25, 8);
+      //     break;
+      //   case 'gordura':
+      //     doc.addImage(gordura, 'PNG', 53.5, 0.5, 25, 8);
+      //     break;
+      //   case 'sodio':
+      //     doc.addImage(sodio, 'PNG', 53.5, 0.5, 25, 8);
+      //     break;
+      //   case 'acucarGordura':
+      //     doc.addImage(acucarGordura, 'PNG', 54, 0.5, 25, 8);
+      //     break;
+      //   case 'acucarSodio':
+      //     doc.addImage(acucarSodio, 'PNG', 53.5, 0.5, 25, 8);
+      //     break;
+      //   case 'sodioGordura':
+      //     doc.addImage(sodioGordura, 'PNG', 53.5, 0.5, 25, 8);
+      //     break;
+      //   case 'todos':
+      //     doc.addImage(todos, 'PNG', 53.5, 0.5, 25, 8);
+      //     break;
+      //   // e assim por diante...
+      // }
 
     }
     // Gerar o blob do PDF
@@ -852,6 +1138,9 @@ const EtiquetasLoja = () => {
         <Button variant="primary" className='me-2' onClick={gerarImpressao}
           disabled={!itemSelecionado}
         >Imprimir etiqueta</Button>
+        <Button variant="primary" className='me-2' onClick={gerarImpressaoAraujo}
+          disabled={!itemSelecionado}
+        >Imprimir etiqueta Araujo</Button>
         <Button variant="success"
           onClick={handleCriar}
           className='me-2'
@@ -1236,6 +1525,22 @@ const EtiquetasLoja = () => {
                       style={{ maxWidth: '80px', border: erros.validade ? '1px solid red' : undefined }}
                     />
                     {erros.validade && <small className="text-danger">Campo obrigatório</small>}
+                  </div>
+                  <div className='me-4'>
+                    <label>Codigo EAN</label>
+                    <input
+                      type='text'
+                      value={valorQuant}
+                      onChange={(e) => {
+                        setValorQuant(e.target.value);
+                        if (erros.valorQuant && e.target.value.trim() !== '') {
+                          setErros(prev => ({ ...prev, validade: false }));
+                        }
+                      }}
+                      className="form-control"
+                      style={{ maxWidth: '150px', border: erros.valorQuant ? '1px solid red' : undefined }}
+                    />
+                    {erros.valorQuant && <small className="text-danger">EAN Inválido</small>}
                   </div>
                 </div>
               </div>
