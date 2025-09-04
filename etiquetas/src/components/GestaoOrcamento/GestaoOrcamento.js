@@ -30,7 +30,7 @@ export default function GestaoOrcamento() {
   const [convidadosFiltro, setConvidadosFiltro] = useState();
   const [loading, setLoading] = useState(false);
   const [aberto, setAberto] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
 
 
@@ -119,40 +119,40 @@ export default function GestaoOrcamento() {
 
   }, []);
 
-  // useEffect(() => {
-  //   console.log("Verificando cookies: ", document.cookie); // Verifique se o cookie está presente
-  //   const token = Cookies.get('token'); // Recupera o token do cookie
-  //   console.log("Token recuperado: ", token); // Debug do token
+  useEffect(() => {
+    console.log("Verificando cookies: ", document.cookie); // Verifique se o cookie está presente
+    const token = Cookies.get('token'); // Recupera o token do cookie
+    console.log("Token recuperado: ", token); // Debug do token
 
-  //   if (token) {
-  //     try {
-  //       const decoded = jwtDecode(token);
-  //       console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        console.log(decoded); // Exibe o conteúdo do token, incluindo a data de expiração
 
-  //       // Verifique se o token está expirado
-  //       const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
+        // Verifique se o token está expirado
+        const isExpired = decoded.exp * 1000 < Date.now(); // exp é em segundos, converte para milissegundos
 
-  //       if (isExpired) {
-  //         setIsLoggedIn(false);
-  //       } else {
-  //         if (decoded.username === 'comercial' || decoded.username === 'admin') {
-  //           setIsLoggedIn(true);
-  //         } else {
-  //           setIsLoggedIn(false);
-  //           window.location.href = "/";
+        if (isExpired) {
+          setIsLoggedIn(false);
+        } else {
+          if (decoded.username === 'comercial' || decoded.username === 'admin') {
+            setIsLoggedIn(true);
+          } else {
+            setIsLoggedIn(false);
+            window.location.href = "/";
 
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error('Erro ao decodificar o token:', error);
-  //     }
-  //   } else {
-  //     setIsLoggedIn(false);
-  //     window.location.href = "/";
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao decodificar o token:', error);
+      }
+    } else {
+      setIsLoggedIn(false);
+      window.location.href = "/";
 
 
-  //   }
-  // }, []);
+    }
+  }, []);
 
   // Vendedores únicos
   const vendedores = [...new Map(
