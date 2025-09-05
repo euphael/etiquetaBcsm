@@ -2,7 +2,7 @@
   "name": "etiquetas",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/",
+  "homepage": "/etiquetas",
   "dependencies": {
     "@chakra-ui/react": "^3.16.1",
     "@emotion/react": "^11.14.0",
