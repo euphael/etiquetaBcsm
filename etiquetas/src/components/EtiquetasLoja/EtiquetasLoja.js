@@ -219,7 +219,7 @@ const EtiquetasLoja = () => {
     if (!isFieldValid(lactose)) novosErros.lactose = true;
     if (!isFieldValid(quantidade)) novosErros.quantidade = true;
     if (!isValidEAN(valorQuant)) novosErros.valorQuant = true;
-    if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
+    // if (!isFieldValid(valorTotal)) novosErros.valorTotal = true;
     if (!isFieldValid(validade)) novosErros.validade = true;
     // if (!isFieldValid(transgenico)) novosErros.transgenico = true;
     // if (!isFieldValid(selo_alto_em)) novosErros.selo_alto_em = true;
@@ -525,11 +525,11 @@ const EtiquetasLoja = () => {
       doc.text(String(nomeProduto), 0.5, y - 6)
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
-      doc.text("Fab.:", 2, 8.5);
-      doc.text("Val.:", 2, 5.5);
-      doc.text(formatDate(fabricacao), 10, 8.5);
-      doc.text(formatDate(validade), 10, 5.5);
-      doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 2.5);
+      doc.text("Fab.:", 2, 6.5);
+      doc.text("Val.:", 2, 3.5);
+      doc.text(formatDate(fabricacao), 10, 6.5);
+      doc.text(formatDate(validade), 10, 3.5);
+      // doc.text(`TOTAL: R$${String(valorTotal)}`, 2, 2.5);
       if (transgenico) {
         if (selo_alto_em !== '') {
           doc.addImage(imgtransgenico, 'PNG', 45, 0.5, 8, 8);
