@@ -25,6 +25,7 @@ export default function GestaoOrcamento() {
   const [dataFinal, setDataFinal] = useState(hoje);
   const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [situacaoFiltro, setSituacaoFiltro] = useState("");
+  const [descricaoFiltro, setDescricaoFiltro] = useState("");
   const [tipoFiltro, setTipoFiltro] = useState("OR");
   const [tamanhoFiltro, setTamanhoFiltro] = useState();
   const [convidadosFiltro, setConvidadosFiltro] = useState();
@@ -61,12 +62,15 @@ export default function GestaoOrcamento() {
     setTipoFiltro("");       // volta para valor padrão
     setTamanhoFiltro('');
     setConvidadosFiltro('');
+    setDescricaoFiltro('')
   };
 
   const orcamentosFiltrados = orcamentos.filter((o) => {
     const vendedorOk = vendedorFiltro ? cleanText(o.IDX_VENDEDOR1).toString() === vendedorFiltro : true;
     const situacaoOk = situacaoFiltro ? o.SITUACAO === situacaoFiltro : true;
     const tipoOk = tipoFiltro ? o.TPDOCTO === tipoFiltro : true;
+    const descricaoOk = descricaoFiltro ? cleanText(o.DESCRICAO[0]) === descricaoFiltro : true;
+
 
     // Verifica o tamanho do orçamento
     const valor = Number(o.AJUSTE_TOTAL) || 0;
@@ -97,7 +101,7 @@ export default function GestaoOrcamento() {
       }
     }
 
-    return vendedorOk && situacaoOk && tipoOk && tamanhoOk && convidadosOk;
+    return vendedorOk && situacaoOk && tipoOk && tamanhoOk && convidadosOk && descricaoOk;
   });
 
 
@@ -161,6 +165,8 @@ export default function GestaoOrcamento() {
   // Situações únicas
   const situacoes = [...new Set(orcamentos.map((o) => o.SITUACAO))];
   const tipo = [...new Set(orcamentos.map((o) => o.TPDOCTO))];
+  const descricao = [...new Set(orcamentos.map((o) => cleanText(o.DESCRICAO[0])))];
+
 
 
 
@@ -259,6 +265,16 @@ export default function GestaoOrcamento() {
         >
           <option value="">Todos</option>
           {tipo.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          className="border shadow-3xl rounded p-2"
+          value={descricaoFiltro}
+          onChange={(e) => setDescricaoFiltro(e.target.value)}
+        >
+          <option value="">Descrição</option>
+          {descricao.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>

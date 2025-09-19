@@ -23,7 +23,7 @@ function taxaConversao(orcs) {
     const totalLancados = orcs.length;
     if (totalLancados === 0) return "0%";
 
-    const totalFechados = orcs.filter(o => o.SITUACAO === "V").length;
+    const totalFechados = orcs.filter(o => o.SITUACAO === "V" || o.SITUACAO === "Z" || o.SITUACAO === "B").length;
 
     const taxa = (totalFechados / totalLancados) * 100;
 
