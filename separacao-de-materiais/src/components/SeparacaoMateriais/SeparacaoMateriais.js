@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
-import { cleanText, formatarData } from "./FuncoesSeparacaoMateriais.js";
+import { cleanText, formatarData, gerarPDF } from "./FuncoesSeparacaoMateriais.js";
 
 export default function SeparacaoMateriais() {
     const [documentos, setDocumentos] = useState([]);
@@ -10,23 +10,19 @@ export default function SeparacaoMateriais() {
     const [data, setData] = useState(hoje);
     const [loading, setLoading] = useState(false);
     const [aberto, setAberto] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState({});
     const [modalAberto, setModalAberto] = useState(false);
     const [itensDocumento, setItensDocumento] = useState([]);
     const [documentoSelecionado, setDocumentoSelecionado] = useState(null);
     const [loadingItens, setLoadingItens] = useState(false);
-
-
-
-
-
+    const [busca, setBusca] = useState("");
 
     const fetchDados = async () => {
         setLoading(true); // inicia o spinner
 
         try {
             const response = await fetch(
-                `http://192.168.1.168:4000/separacao-de-materiais/buscar-doc-sep?data=${data}`
+                `http://192.168.1.250/server-pascoa/separacao-de-materiais/buscar-doc-sep?data=${data}`
             );
             const dados = await response.json();
             setDocumentos(dados);
@@ -39,34 +35,33 @@ export default function SeparacaoMateriais() {
 
     };
     const fetchItensDocumento = async (documento) => {
-        setLoadingItens(true);
+        setLoadingItens( prev => ({ ...prev, [documento]: true }));
         try {
             const response = await fetch(
-                `http://192.168.1.168:4000/separacao-de-materiais/buscar-materiais?documento=${documento}`
+                `http://192.168.1.250/server-pascoa/separacao-de-materiais/buscar-materiais?documento=${documento}`
             );
             const dados = await response.json();
             setItensDocumento(dados);
             setDocumentoSelecionado(documento);
-            setModalAberto(true);
         } catch (err) {
             console.error("Erro ao buscar itens do documento:", err);
         } finally {
-            setLoadingItens(false);
+            setModalAberto(true);
+            setLoadingItens( prev => ({ ...prev, [documento]: false }));
         }
     };
 
 
 
 
-    const documentosFiltrados = documentos.filter((o) => {
-
-
-
-        return documentos
+    const documentosFiltrados = documentos.filter((doc) => {
+        const termo = busca.toLowerCase();
+        return (
+            doc.DOCUMENTO.toString().includes(termo) ||
+            (doc.NOME && doc.NOME.toLowerCase().includes(termo))
+        );
     });
 
-
-    //   const dadosExportacao = orcamentosFiltrados.map(o => ({
     //     Documento: o.DOCUMENTO,
     //     Tipo: o.TPDOCTO,
     //     Vendedor: o.NOMEINTERNO,
@@ -145,8 +140,7 @@ export default function SeparacaoMateriais() {
                     style={{ height: "55px" }}
                 />
 
-                {/* Botão Login/Logout */}
-                <button
+                {/* <button
                     onClick={() => {
                         if (isLoggedIn) {
                             Cookies.remove("token");
@@ -161,7 +155,7 @@ export default function SeparacaoMateriais() {
                         }`}
                 >
                     {isLoggedIn ? "Sair" : "Entrar"}
-                </button>
+                </button> */}
             </div>
 
 
@@ -203,67 +197,26 @@ export default function SeparacaoMateriais() {
                     )}
                     {loading ? "Carregando..." : "Buscar"}
                 </button>
-                {/* <button
-          onClick={() => exportToExcel(dadosExportacao)}
-          className="shadow-3xl bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          Exportar Excel
-        </button> */}
-
             </div>
-
-            {/* Cards Resumo */}
-            {/* <div className="grid grid-cols-4 gap-4 p-6">
-        <div className="p-2 bg-white rounded shadow-3xl">
-          <h2 className="font-bold">Quatidade de Orçamentos</h2>
-          <p className="text-2xl">{orcamentosFiltrados.length}</p>
-        </div>
-        <div className="p-2 bg-white rounded shadow-3xl">
-          <h2 className="font-bold">Valor Total</h2>
-          <p className="text-2xl">
-            R$ {orcamentosFiltrados.reduce((acc, o) => acc + o.AJUSTE_TOTAL, 0).toLocaleString()}
-          </p>
-        </div>
-        <div className="p-2 bg-white rounded shadow-3xl">
-          <h2 className="font-bold">Valor Médio por Orçamento</h2>
-          <p className="text-2xl">
-            R$ {(orcamentosFiltrados.reduce((acc, o) => acc + o.AJUSTE_TOTAL, 0) / (orcamentosFiltrados.length || 1)).toLocaleString()}
-          </p>
-        </div>
-        <div className="p-2 bg-white rounded shadow-3xl">
-          <h2 className="font-bold">Valor Médio por Pessoa</h2>
-          <p className="text-2xl">
-            R$ {(orcamentosFiltrados.reduce((acc, o) => acc + valorPorPessoa(o), 0) / (orcamentosFiltrados.length || 1)).toFixed(2)}
-          </p>
-        </div>
-        <div className="p-2 bg-white rounded shadow-3xl">
-          <h2 className="font-bold">Tempo Médio Para Fechar</h2>
-          <p className="text-2xl">
-            {mediaTempoFechamento(orcamentosFiltrados)}
-          </p>
-        </div>
-        <div className="p-2 bg-white rounded shadow-3xl">
-          <h2 className="font-bold">Taxa de Conversão</h2>
-          <p className="text-2xl">
-            {taxaConversao(orcamentosFiltrados)}
-          </p>
-        </div>
-      </div> */}
-
-            {/* Tabela */}
             <div className="p-6">
-
+                <div className="mb-4 flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="Pesquisar por nº documento ou cliente..."
+                        value={busca}
+                        onChange={(e) => setBusca(e.target.value)}
+                        className="border px-4 py-2 rounded w-full focus:outline-none focus:ring focus:ring-blue-300"
+                    />
+                </div>
                 <div className="bg-white shadow-3xl rounded overflow-hidden">
                     <table className="w-full text-sm text-left border ">
                         <thead className="bg-gray-100 text-gray-700">
                             <tr>
-                                {/* <th className="px-4 py-2">#</th> */}
                                 <th className="px-4 py-2">Documento</th>
                                 <th className="px-4 py-2">Tipo</th>
                                 <th className="px-4 py-2">Vendedor</th>
                                 <th className="px-4 py-2">Cliente</th>
                                 <th className="px-4 py-2">Data</th>
-                                <th className="px-4 py-2">Valor</th>
                                 <th className="px-4 py-2">Convidados</th>
                                 <th className="px-4 py-2">Visualizar</th>
                             </tr>
@@ -272,26 +225,39 @@ export default function SeparacaoMateriais() {
                             {documentosFiltrados.map((orc) => (
                                 <React.Fragment key={orc.DOCUMENTO}>
                                     <tr className="border-t">
-                                        {/* <td className="px-2">
-                      <div
-                        className="cursor-pointer p-3 hover:bg-gray-200"
-                        onClick={() => setAberto(aberto === orc.DOCUMENTO ? null : orc.DOCUMENTO)}
-                      >
-                        <span>{orc.nome}</span>
-                        <span>{aberto === orc.DOCUMENTO ? "▲" : "▼"}</span>
-                      </div>
-                    </td> */}
+
                                         <td className="px-4 py-2 border-gray-400">{orc.DOCUMENTO}</td>
                                         <td className="px-4 py-2">{orc.TPDOCTO}</td>
                                         <td className="px-4 py-2">{cleanText(orc.NOMEINTERNO)}</td>
                                         <td className="px-4 py-2">{orc.NOME}</td>
                                         <td className="px-4 py-2">{formatarData(orc.DTEVENTO)}</td>
-                                        <td className="px-4 py-2">R$ {orc.AJUSTE_TOTAL.toLocaleString()}</td>
                                         <td className="px-4 py-2">{orc.CONVIDADOS}</td>
                                         <td><button
                                             onClick={() => fetchItensDocumento(orc.DOCUMENTO)}
                                             className="bg-blue-500 text-white p-2 rounded flex items-center justify-center gap-2 hover:bg-blue-600 disabled:opacity-50"
-                                        >Visualizar</button></td>
+                                        >{loadingItens[orc.DOCUMENTO] && (
+                        <svg
+                            className="animate-spin h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                            ></circle>
+                            <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3h-4z"
+                            ></path>
+                        </svg>
+                    )}
+                    {loadingItens[orc.DOCUMENTO] ? "Carregando..." : "Visualizar"}</button></td>
                                     </tr>
                                     <AnimatePresence>
                                         {modalAberto && (
@@ -308,75 +274,97 @@ export default function SeparacaoMateriais() {
                                                     className="bg-white rounded p-6 w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto"
                                                 >
                                                     <div className="flex justify-between items-center mb-4">
-                                                        <h2 className="text-xl font-bold">Itens do Documento {documentoSelecionado}</h2>
-                                                        <button
-                                                            onClick={() => setModalAberto(false)}
-                                                            className="text-red-500 font-bold text-lg"
-                                                        >
-                                                            X
-                                                        </button>
+                                                        <h2 className="text-xl font-bold">
+                                                            Itens do Documento {documentoSelecionado}
+                                                        </h2>
+
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() =>
+                                                                    gerarPDF(
+                                                                        documentoSelecionado,
+                                                                        documentos.find((d) => d.DOCUMENTO === documentoSelecionado),
+                                                                        itensDocumento
+                                                                    )
+                                                                }
+                                                                className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+                                                            >
+                                                                Imprimir
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setModalAberto(false)}
+                                                                className="bg-red-400 text-white font-bold p-2 rounded hover:bg-red-500"
+                                                            >
+                                                                X
+                                                            </button>
+                                                        </div>
                                                     </div>
 
-                                                    {loadingItens ? (
+                                                    {loadingItens[orc.DOCUMENTO] ? (
                                                         <p>Carregando...</p>
                                                     ) : (
-                                                        <table className="w-full text-sm text-left border">
-                                                            <thead className="bg-gray-100">
-                                                                <tr>
-                                                                    <th className="px-4 py-2 border">Código</th>
-                                                                    <th className="px-4 py-2 border">Descrição</th>
-                                                                    <th className="px-4 py-2 border">Quantidade</th>
-                                                                    <th className="px-4 py-2 border">Unidade</th>
-                                                                    <th className="px-4 py-2 border">Negócio</th>
-                                                                    <th className="px-4 py-2 border">Linha</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {itensDocumento.map((item, index) => (
-                                                                    <tr key={index} className="border-t">
-                                                                        <td className="px-4 py-2 border">{cleanText(item.CODPRODUTO)}</td>
-                                                                        <td className="px-4 py-2 border">{item.DESCRICAO}</td>
-                                                                        <td className="px-4 py-2 border">{item.QUANTIDADE_AJUSTADA}</td>
-                                                                        <td className="px-4 py-2 border">{item.UNIDADE}</td>
-                                                                        <td className="px-4 py-2 border">{cleanText(item.IDX_NEGOCIO)}</td>
-                                                                        <td className="px-4 py-2 border">{cleanText(item.IDX_LINHA)}</td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
+                                                        <>
+                                                            {documentos.find(d => d.DOCUMENTO === documentoSelecionado) && (
+                                                                <div className="mb-6 p-4 bg-gray-50 rounded shadow">
+                                                                    <h3 className="text-lg font-semibold mb-2">Informações do Evento</h3>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                                        <p><strong>Cliente:</strong> {documentos.find(d => d.DOCUMENTO === documentoSelecionado).NOME}</p>
+                                                                        <p><strong>Vendedor:</strong> {cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).NOMEINTERNO)}</p>
+                                                                        <p><strong>Data do Evento:</strong> {formatarData(documentos.find(d => d.DOCUMENTO === documentoSelecionado).DTEVENTO)}</p>
+                                                                        <p><strong>Convidados:</strong> {documentos.find(d => d.DOCUMENTO === documentoSelecionado).CONVIDADOS}</p>
+                                                                        <p><strong>Valor Total:</strong> R$ {documentos.find(d => d.DOCUMENTO === documentoSelecionado).AJUSTE_TOTAL.toLocaleString()}</p>
+                                                                        <p><strong>Evento:</strong> {cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).DESCRICAO)}</p>
+                                                                        <p><strong>Telefone:</strong> <strong>{cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).TPTELEFONE1)}</strong> {cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).DDD1)} {cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).TELEFONE1)} <strong>{cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).TPTELEFONE2)}</strong> {cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).DDD2)} {cleanText(documentos.find(d => d.DOCUMENTO === documentoSelecionado).TELEFONE2)}</p>
+                                                                        <p><strong>Local:</strong> {documentos.find(d => d.DOCUMENTO === documentoSelecionado).LOCAL}</p>
+                                                                        <p><strong>OBS Externas:</strong> {documentos.find(d => d.DOCUMENTO === documentoSelecionado).TEXTO}<br></br>{documentos.find(d => d.DOCUMENTO === documentoSelecionado).TXTCONCLUSAO}</p>
+                                                                        <p><strong>OBS Internas:</strong> {documentos.find(d => d.DOCUMENTO === documentoSelecionado).TXTHISTORICO}</p>
+
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {Object.entries(
+                                                                itensDocumento.reduce((acc, item) => {
+                                                                    const negocio = cleanText(item.IDX_NEGOCIO) || "Sem Negócio";
+                                                                    if (!acc[negocio]) acc[negocio] = [];
+                                                                    acc[negocio].push(item);
+                                                                    return acc;
+                                                                }, {})
+                                                            ).map(([negocio, itens]) => (
+                                                                <div key={negocio} className="mb-8">
+                                                                    <h3 className="text-lg font-bold mb-2">{negocio}</h3>
+                                                                    <table className="w-full text-sm text-left border">
+                                                                        <thead className="bg-gray-100">
+                                                                            <tr>
+                                                                                <th className="px-4 py-2 border">Código</th>
+                                                                                <th className="px-4 py-2 border">Descrição</th>
+                                                                                <th className="px-4 py-2 border">Quantidade</th>
+                                                                                <th className="px-4 py-2 border">Unidade</th>
+                                                                                <th className="px-4 py-2 border">Negócio</th>
+                                                                                <th className="px-4 py-2 border">Linha</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            {itens.map((item, index) => (
+                                                                                <tr key={index} className="border-t">
+                                                                                    <td className="px-4 py-2 border">{cleanText(item.CODPRODUTO)}</td>
+                                                                                    <td className="px-4 py-2 border">{item.DESCRICAO}</td>
+                                                                                    <td className="px-4 py-2 border">{item.QUANTIDADE_AJUSTADA}</td>
+                                                                                    <td className="px-4 py-2 border">{item.UNIDADE}</td>
+                                                                                    <td className="px-4 py-2 border">{cleanText(item.IDX_NEGOCIO)}</td>
+                                                                                    <td className="px-4 py-2 border">{cleanText(item.IDX_LINHA)}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            ))}
+                                                        </>
                                                     )}
+
                                                 </motion.div>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
-
-                                    {/* <AnimatePresence>
-                    {aberto === orc.DOCUMENTO && (
-                      <td colSpan={10} className=" bg-gray-50">
-
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.4, ease: "easeInOut" }}
-                          className="overflow-hidden bg-gray-50"
-                        >
-                          <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-gray-700">
-                            <p><strong>Descrição:</strong> {cleanText(orc.DESCRICAO[0])} - {orc.DESCRICAO[1]}</p>
-                            <p><strong>CNPJ/CPF:</strong> {orc.CNPJCPF}</p>
-                            <p><strong>Cidade:</strong> {orc.CIDADE} - {orc.UF}</p>
-                            <p><strong>Endereço:</strong> {orc.LOCAL}</p>
-                            <p><strong>Contato:</strong> {orc.CONTATO}</p>
-                            <p><strong>Email:</strong> {orc.EMAIL}</p>
-                            <p><strong>Telefone:</strong> {orc.TELEFONE}</p>
-                            <p><strong>Data da Inclusão:</strong> {formatarData(orc.DTINC[0])}</p>
-                            <p><strong>Data do Evento:</strong> {formatarData(orc.DTEVENTO)}</p>
-                          </div>
-                        </motion.div>
-                      </td>
-                    )}
-                  </AnimatePresence> */}
-
                                 </React.Fragment>
                             ))}
 
