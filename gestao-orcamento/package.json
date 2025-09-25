@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "/gestao-orcamento",
   "dependencies": {
+    "dayjs": "^1.11.18",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.12",
     "js-cookie": "^3.0.5",
@@ -12,6 +13,7 @@
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1",
     "react-scripts": "^5.0.1",
+    "recharts": "^3.2.1",
     "web-vitals": "^5.1.0",
     "xlsx": "^0.18.5"
   },

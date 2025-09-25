@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
@@ -16,6 +16,11 @@ import {
   formatarData,
   exportToExcel
 } from "./FuncoesGestaoDeOrcamento.js";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart,
+  Line,LabelList
+} from "recharts";
 
 export default function GestaoOrcamento() {
   const [orcamentos, setOrcamentos] = useState([]);
@@ -32,6 +37,18 @@ export default function GestaoOrcamento() {
   const [loading, setLoading] = useState(false);
   const [aberto, setAberto] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [abaAtiva, setAbaAtiva] = useState("graficos"); // "graficos" ou "tabela"
+  const [loadingTabela, setLoadingTabela] = useState(false);
+  const coresCategoria = {
+    "Convertidos": "#22c55e",
+    "Não Convertidos": "#ef4444",
+    "Em Aberto": "#facc15"
+  };
+
+  // Agrupar orçamentos por categoria
+
+
+
 
 
 
@@ -54,6 +71,7 @@ export default function GestaoOrcamento() {
     }
 
   };
+
 
 
   const limparFiltros = () => {
@@ -103,6 +121,29 @@ export default function GestaoOrcamento() {
 
     return vendedorOk && situacaoOk && tipoOk && tamanhoOk && convidadosOk && descricaoOk;
   });
+  // Valor total por vendedor
+  const valorPorVendedor = orcamentosFiltrados.reduce((acc, o) => {
+    const vendedor = cleanText(o.NOMEINTERNO) || "Sem Vendedor";
+    acc[vendedor] = (acc[vendedor] || 0) + (o.AJUSTE_TOTAL || 0);
+    return acc;
+  }, {});
+  const dataVendedores = Object.entries(valorPorVendedor).map(([name, value]) => ({ name, value }));
+
+  // Quantidade por situação
+  const qtdPorSituacao = orcamentosFiltrados.reduce((acc, o) => {
+    const situacao = nomeSituacao(o.SITUACAO);
+    acc[situacao] = (acc[situacao] || 0) + 1;
+    return acc;
+  }, {});
+  const dataSituacoes = Object.entries(qtdPorSituacao).map(([name, value]) => ({ name, value }));
+
+  // Distribuição de tamanhos
+  const dataTamanho = [
+    { name: "Pequeno (0–20k)", value: orcamentosFiltrados.filter(o => o.AJUSTE_TOTAL <= 20000).length },
+    { name: "Médio (20–50k)", value: orcamentosFiltrados.filter(o => o.AJUSTE_TOTAL > 20000 && o.AJUSTE_TOTAL <= 50000).length },
+    { name: "Grande (50–100k)", value: orcamentosFiltrados.filter(o => o.AJUSTE_TOTAL > 50000 && o.AJUSTE_TOTAL <= 100000).length },
+    { name: "Gigante (100k+)", value: orcamentosFiltrados.filter(o => o.AJUSTE_TOTAL > 100000).length },
+  ];
 
 
   const dadosExportacao = orcamentosFiltrados.map(o => ({
@@ -167,7 +208,66 @@ export default function GestaoOrcamento() {
   const tipo = [...new Set(orcamentos.map((o) => o.TPDOCTO))];
   const descricao = [...new Set(orcamentos.map((o) => cleanText(o.DESCRICAO[0])))];
 
+  const dataMeses = useMemo(() => {
+    const agrupado = {};
 
+    orcamentosFiltrados.forEach((orc) => {
+      if (!orc.DTINC[0]) return;
+
+      const data = formatarData(orc.DTINC[0]); // dd/mm/aaaa
+      const [dia, mes, ano] = data.split("/");
+
+      const chave = `${ano}-${mes}`; // yyyy-mm para ordenar
+
+      if (!agrupado[chave]) {
+        agrupado[chave] = { convertidos: 0, naoConvertidos: 0 };
+      }
+
+      const convertidos = ["Z", "F", "B", "V"];
+
+      if (convertidos.includes(orc.SITUACAO)) {
+        agrupado[chave].convertidos += 1;
+      } else {
+        agrupado[chave].naoConvertidos += 1;
+      }
+    });
+
+    return Object.keys(agrupado)
+      .sort((a, b) => new Date(a + "-01") - new Date(b + "-01"))
+      .map((chave) => {
+        const [ano, mes] = chave.split("-");
+        const convertidos = agrupado[chave].convertidos;
+        const naoConvertidos = agrupado[chave].naoConvertidos;
+
+        return {
+          mesAno: `${mes}/${ano}`,
+          convertidos: agrupado[chave].convertidos,
+          naoConvertidos: agrupado[chave].naoConvertidos,
+          total: convertidos + naoConvertidos
+        };
+      });
+  }, [orcamentosFiltrados]);
+
+
+
+
+  const dataCategorias = orcamentosFiltrados.reduce((acc, o) => {
+    const situacao = o.SITUACAO;
+    let categoria;
+
+    if (["Z", "F", "B", "V"].includes(situacao)) {
+      categoria = "Convertidos";
+    } else if (["C", "N", "Y"].includes(situacao)) {
+      categoria = "Não Convertidos";
+    } else {
+      categoria = "Outros";
+    }
+
+    acc[categoria] = (acc[categoria] || 0) + 1;
+    return acc;
+  }, {});
+
+  const pieData = Object.entries(dataCategorias).map(([name, value]) => ({ name, value }));
 
 
 
@@ -382,96 +482,231 @@ export default function GestaoOrcamento() {
           </p>
         </div>
       </div>
+      <div className="flex gap-4 p-4">
+        <button
+          onClick={() => setAbaAtiva("graficos")}
+          className={`shadow-3xl px-4 py-2 rounded ${abaAtiva === "graficos" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Gráficos
+        </button>
+        <button
+          onClick={async () => {
+            setLoadingTabela(true);
+            // Simula carregamento, aqui você poderia chamar fetchDados ou outro processo
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            setAbaAtiva("tabela");
+            setLoadingTabela(false);
+          }}
+          className={`shadow-3xl p-2 rounded flex items-center justify-center gap-2 hover:bg-blue-600 ${abaAtiva === "tabela" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          disabled={loadingTabela}
+        >
+          {loadingTabela && (
+            <svg
+              className="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4l-3 3 3 3h-4z"
+              ></path>
+            </svg>
+          )}
+          {loadingTabela ? "Carregando..." : "Mostrar Tabela"}
+        </button>
+      </div>
 
       {/* Tabela */}
-      <div className="p-6">
+      {abaAtiva === "tabela" && (
+        <div className="p-6">
 
-        <div className="bg-white shadow-3xl rounded overflow-hidden">
-          <table className="w-full text-sm text-left border ">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-2">#</th>
-                <th className="px-4 py-2">Documento</th>
-                <th className="px-4 py-2">Tipo</th>
-                <th className="px-4 py-2">Vendedor</th>
-                <th className="px-4 py-2">Cliente</th>
-                <th className="px-4 py-2">Sitação</th>
-                <th className="px-4 py-2">Valor</th>
-                <th className="px-4 py-2">Convidados</th>
-                <th className="px-4 py-2">Tempo em Casa</th>
-                <th className="px-4 py-2">Valor/Pessoa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orcamentosFiltrados.map((orc) => (
-                <React.Fragment key={orc.DOCUMENTO}>
-                  {/* Linha principal */}
-                  <tr className="border-t">
-                    <td className="px-2">
-                      <div
-                        className="cursor-pointer p-3 hover:bg-gray-200"
-                        onClick={() => setAberto(aberto === orc.DOCUMENTO ? null : orc.DOCUMENTO)}
-                      >
-                        <span>{orc.nome}</span>
-                        <span>{aberto === orc.DOCUMENTO ? "▲" : "▼"}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 border-gray-400">{orc.DOCUMENTO}</td>
-                    <td className="px-4 py-2">{orc.TPDOCTO}</td>
-                    <td className="px-4 py-2">{cleanText(orc.NOMEINTERNO)}</td>
-                    <td className="px-4 py-2">{orc.NOME}</td>
-                    <td className={`px-4 py-2 font-bold ${corSituacao(orc.SITUACAO)}`}>
-                      {nomeSituacao(orc.SITUACAO)}
-                    </td>
-                    <td className="px-4 py-2">R$ {orc.AJUSTE_TOTAL.toLocaleString()}</td>
-                    <td className="px-4 py-2">{orc.CONVIDADOS}</td>
-                    <td className={corTempo(orc.SITUACAO, orc.DTINC[0])}>
-                      {orc.TPDOCTO === 'EC' && orc.SITUACAO !== 'N'
-                        ? diferencaEntreDatas(orc.DTINC[0], orc.DTALT)
-                        : orc.SITUACAO === "C"
-                          ? diferencaEntreDatas(orc.DTINC[0], orc.DTALT)
-                          : orc.SITUACAO === 'Z' || orc.SITUACAO === 'V' || orc.SITUACAO === 'B'
-                            ? diferencaEntreDatas(orc.DTINC[0], orc.DTINC[1])
-                            : <Timer dt={orc.DTINC[0]} />}
-                    </td>
-                    <td className="px-4 py-2">R$ {valorPorPessoa(orc).toFixed(2)}</td>
-                  </tr>
-
-                  {/* Dropdown de detalhes */}
-                  <AnimatePresence>
-                    {aberto === orc.DOCUMENTO && (
-                      <td colSpan={10} className=" bg-gray-50">
-
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.4, ease: "easeInOut" }}
-                          className="overflow-hidden bg-gray-50"
+          <div className="bg-white shadow-3xl rounded   max-h-[500px] overflow-auto">
+            <table className="w-full text-sm text-left border ">
+              <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-2">#</th>
+                  <th className="px-4 py-2">Documento</th>
+                  <th className="px-4 py-2">Tipo</th>
+                  <th className="px-4 py-2">Vendedor</th>
+                  <th className="px-4 py-2">Cliente</th>
+                  <th className="px-4 py-2">Sitação</th>
+                  <th className="px-4 py-2">Valor</th>
+                  <th className="px-4 py-2">Convidados</th>
+                  <th className="px-4 py-2">Tempo em Casa</th>
+                  <th className="px-4 py-2">Valor/Pessoa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orcamentosFiltrados.map((orc) => (
+                  <React.Fragment key={orc.DOCUMENTO}>
+                    {/* Linha principal */}
+                    <tr className="border-t">
+                      <td className="px-2">
+                        <div
+                          className="cursor-pointer p-3 hover:bg-gray-200"
+                          onClick={() => setAberto(aberto === orc.DOCUMENTO ? null : orc.DOCUMENTO)}
                         >
-                          <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-gray-700">
-                            <p><strong>Descrição:</strong> {cleanText(orc.DESCRICAO[0])} - {orc.DESCRICAO[1]}</p>
-                            <p><strong>CNPJ/CPF:</strong> {orc.CNPJCPF}</p>
-                            <p><strong>Cidade:</strong> {orc.CIDADE} - {orc.UF}</p>
-                            <p><strong>Endereço:</strong> {orc.LOCAL}</p>
-                            <p><strong>Contato:</strong> {orc.CONTATO}</p>
-                            <p><strong>Email:</strong> {orc.EMAIL}</p>
-                            <p><strong>Telefone:</strong> {orc.TELEFONE}</p>
-                            <p><strong>Data da Inclusão:</strong> {formatarData(orc.DTINC[0])}</p>
-                            <p><strong>Data do Evento:</strong> {formatarData(orc.DTEVENTO)}</p>
-                          </div>
-                        </motion.div>
+                          <span>{orc.nome}</span>
+                          <span>{aberto === orc.DOCUMENTO ? "▲" : "▼"}</span>
+                        </div>
                       </td>
-                    )}
-                  </AnimatePresence>
+                      <td className="px-4 py-2 border-gray-400">{orc.DOCUMENTO}</td>
+                      <td className="px-4 py-2">{orc.TPDOCTO}</td>
+                      <td className="px-4 py-2">{cleanText(orc.NOMEINTERNO)}</td>
+                      <td className="px-4 py-2">{orc.NOME}</td>
+                      <td className={`px-4 py-2 font-bold ${corSituacao(orc.SITUACAO)}`}>
+                        {nomeSituacao(orc.SITUACAO)}
+                      </td>
+                      <td className="px-4 py-2">R$ {orc.AJUSTE_TOTAL.toLocaleString()}</td>
+                      <td className="px-4 py-2">{orc.CONVIDADOS}</td>
+                      <td className={corTempo(orc.SITUACAO, orc.DTINC[0])}>
+                        {orc.TPDOCTO === 'EC' && orc.SITUACAO !== 'N'
+                          ? diferencaEntreDatas(orc.DTINC[0], orc.DTALT)
+                          : orc.SITUACAO === "C"
+                            ? diferencaEntreDatas(orc.DTINC[0], orc.DTALT)
+                            : orc.SITUACAO === 'Z' || orc.SITUACAO === 'V' || orc.SITUACAO === 'B'
+                              ? diferencaEntreDatas(orc.DTINC[0], orc.DTINC[1])
+                              : <Timer dt={orc.DTINC[0]} />}
+                      </td>
+                      <td className="px-4 py-2">R$ {valorPorPessoa(orc).toFixed(2)}</td>
+                    </tr>
 
-                </React.Fragment>
-              ))}
+                    {/* Dropdown de detalhes */}
+                    <AnimatePresence>
+                      {aberto === orc.DOCUMENTO && (
+                        <td colSpan={10} className=" bg-gray-50">
 
-            </tbody>
-          </table>
-        </div>
-      </div>
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                            className="overflow-hidden bg-gray-50"
+                          >
+                            <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-gray-700">
+                              <p><strong>Descrição:</strong> {cleanText(orc.DESCRICAO[0])} - {orc.DESCRICAO[1]}</p>
+                              <p><strong>CNPJ/CPF:</strong> {orc.CNPJCPF}</p>
+                              <p><strong>Cidade:</strong> {orc.CIDADE} - {orc.UF}</p>
+                              <p><strong>Endereço:</strong> {orc.LOCAL}</p>
+                              <p><strong>Contato:</strong> {orc.CONTATO}</p>
+                              <p><strong>Email:</strong> {orc.EMAIL}</p>
+                              <p><strong>Telefone:</strong> {orc.TELEFONE}</p>
+                              <p><strong>Data da Inclusão:</strong> {formatarData(orc.DTINC[0])}</p>
+                              <p><strong>Data do Evento:</strong> {formatarData(orc.DTEVENTO)}</p>
+                            </div>
+                          </motion.div>
+                        </td>
+                      )}
+                    </AnimatePresence>
+
+                  </React.Fragment>
+                ))}
+
+              </tbody>
+            </table>
+          </div>
+        </div>)}
+      {abaAtiva === "graficos" && (
+
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="bg-white shadow-3xl rounded p-4">
+
+            <h2 className="font-bold mb-2">Quantidade por Situação</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, value }) => {
+                  const total = pieData.reduce((acc, entry) => acc + entry.value, 0);
+                  const percentual = ((value / total) * 100).toFixed(2); // 1 casa decimal
+                  return `${name}: ${percentual}%`;
+                }}
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={coresCategoria[entry.name]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+
+
+          </div>
+
+          {/* Quantidade por situação */}
+          <div className="bg-white shadow-3xl rounded p-4">
+            <h2 className="font-bold mb-2">Distribuição por Tamanho do Orçamento</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={dataTamanho}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => `${value} orçamentos`} />
+                <Bar dataKey="value" fill="#10b981">
+                  <LabelList
+                    dataKey="value"
+                    position="top"
+                    formatter={(value) => {
+                      const total = dataTamanho.reduce((acc, item) => acc + item.value, 0);
+                      return `${((value / total) * 100).toFixed(1)}%`; // Mostra percentual
+                    }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="bg-white shadow-3xl rounded p-4 col-span-1 md:col-span-2">
+            <h3 className="text-lg font-semibold mb-2">
+              Orçamentos por Mês
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={dataMeses}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="mesAno"
+                  interval={0}
+                  tick={({ x, y, payload }) => {
+                    const dados = dataMeses.find(d => d.mesAno === payload.value);
+                    const porcentagem = dados ? ((dados.convertidos / dados.total) * 100).toFixed(0) + "%" : "";
+
+                    return (
+                      <g transform={`translate(${x},${y + 10})`}>
+                        <text textAnchor="middle" fill="#666" fontSize={12}>
+                          {payload.value}  {/* data */}
+                        </text>
+                        <text textAnchor="middle" fill="#22c55e" fontSize={12} y={15}>
+                          {porcentagem}  {/* % de convertidos */}
+                        </text>
+                      </g>
+                    );
+                  }}
+                />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#8884d8"
+                  strokeWidth={2}
+                  name="Total Orçamentos"
+                />
+                <Line type="monotone" dataKey="convertidos" stroke="#22c55e" name="Convertidos" />
+                <Line type="monotone" dataKey="naoConvertidos" stroke="#ef4444" name="Não Convertidos" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>)}
     </div>
   );
 }

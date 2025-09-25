@@ -204,6 +204,7 @@ function exportToExcel(dados, nomeArquivo = "planejamento.xlsx") {
   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
   saveAs(data, nomeArquivo);
 }
+
 export {
   corTempo,
   taxaConversao,
