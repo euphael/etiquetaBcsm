@@ -22,7 +22,7 @@ const gerarPDF = (documento, evento, itensDocumento) => {
 
   // Cabeçalho
   doc.setFontSize(16);
-  doc.text(`Relatório do Documento ${documento}`, 40, 40);
+  doc.text(`Relatório do Documento ${documento}`, 40, 20);
 
   // Informações do evento
   const info = [
@@ -38,7 +38,7 @@ const gerarPDF = (documento, evento, itensDocumento) => {
   ];
 
   autoTable(doc, {
-    startY: 80,
+    startY: 30,
     head: [["Campo", "Valor"]],
     body: info,
     styles: { fontSize: 9, cellPadding: 4 },

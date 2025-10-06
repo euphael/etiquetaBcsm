@@ -4,6 +4,9 @@ import { saveAs } from "file-saver";
 
 
 
+// Função para gerar botões com reticências
+
+
 function corTempo(situacao, dt) {
     const agora = new Date();
     const inicio = new Date(dt);
@@ -218,5 +221,4 @@ export {
   Timer,
   EventoDropdown,
   formatarData,
-  exportToExcel
-};
+  exportToExcel};
