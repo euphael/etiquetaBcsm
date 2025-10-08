@@ -623,7 +623,6 @@ export default function GestaoOrcamento() {
 
     return (
       <g transform={`translate(${x},${y})`}>
-        {/* Linha 1: Nome do mês */}
         <text
           x={0}
           y={0}
@@ -635,7 +634,6 @@ export default function GestaoOrcamento() {
           {payload.value}
         </text>
 
-        {/* Linha 2: Taxa do tipo OR ou EC */}
         <text
           x={0}
           y={15}
@@ -670,7 +668,6 @@ export default function GestaoOrcamento() {
           zIndex: 50,
         }}
       >
-        {/* Logo */}
         <img
           src="https://souttomayorevoce.com.br/wp-content/themes/soutto/images/logo-soutto.png"
           alt="Célia Soutto Mayor - Buffet em BH | Célia Soutto Mayor"
@@ -678,19 +675,11 @@ export default function GestaoOrcamento() {
           className="webpexpress-processed no-lazy"
           style={{ height: "55px" }}
         />
-
-        {/* Botão Login/Logout */}
-
         <button
           onClick={async () => {
             setLoading(true);
-
-            // Simula carregamento (por exemplo, ao buscar dados)
             await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            // Alterna entre 'tabela' e 'grafico'
             setAbaAtiva((prev) => (prev === "tabela" ? "graficos" : "tabela"));
-
             setLoading(false);
           }}
           className={`shadow-3xl p-2 rounded flex items-center justify-center gap-2 hover:bg-blue-600 ${abaAtiva === "tabela" ? "bg-blue-500 text-white" : "bg-gray-200"
@@ -704,9 +693,6 @@ export default function GestaoOrcamento() {
               : "Tabela"}
         </button>
       </div>
-
-
-      {/* Filtros */}
       {abaAtiva === "tabela" && (
         <div>
           <div className="p-6 flex flex-wrap gap-4"
@@ -717,7 +703,7 @@ export default function GestaoOrcamento() {
               onChange={async (e) => {
                 const novoTipo = e.target.value;
                 setTipoData(novoTipo);
-                await fetchDados(); // chama novamente a busca
+                await fetchDados();
               }}
             >
               <option value="DTINC">Data de Lançamento</option>
@@ -892,7 +878,6 @@ export default function GestaoOrcamento() {
               <option value="DTPREVISAO">Data do Evento</option>
             </select>
 
-            {/* Ano Base */}
             <label className="flex items-center gap-2">
               <span className="font-medium">Ano Base:</span>
               <select
@@ -906,7 +891,6 @@ export default function GestaoOrcamento() {
               </select>
             </label>
 
-            {/* Ano Comparação */}
             <label className="flex items-center gap-2">
               <span className="font-medium">Ano Comparação:</span>
               <select
@@ -976,8 +960,6 @@ export default function GestaoOrcamento() {
           </svg>
         )}
       </div>
-
-      {/* Tabela */}
       {abaAtiva === "tabela" && (
         <div className="p-6">
 
@@ -1000,7 +982,6 @@ export default function GestaoOrcamento() {
               <tbody>
                 {itensPaginados.map((orc) => (
                   <React.Fragment key={orc.DOCUMENTO}>
-                    {/* Linha principal */}
                     <tr className="border-t">
                       <td className="px-2">
                         <div
@@ -1031,12 +1012,9 @@ export default function GestaoOrcamento() {
                       </td>
                       <td className="px-4 py-2">R$ {valorPorPessoa(orc).toFixed(2)}</td>
                     </tr>
-
-                    {/* Dropdown de detalhes */}
                     <AnimatePresence>
                       {aberto === orc.DOCUMENTO && (
                         <td colSpan={10} className=" bg-gray-50">
-
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
@@ -1062,10 +1040,7 @@ export default function GestaoOrcamento() {
 
                   </React.Fragment>
                 ))}
-
               </tbody>
-
-
               <tr>
                 <td colSpan={10} className="p-4 bg-white bottom-0 z-20">
                   <div className="flex justify-center items-center gap-2">
@@ -1076,7 +1051,6 @@ export default function GestaoOrcamento() {
                     >
                       ◀
                     </button>
-
                     {gerarBotoes().map((num, idx) =>
                       num === "..." ? (
                         <span key={idx} className="px-2 text-gray-500">
@@ -1093,7 +1067,6 @@ export default function GestaoOrcamento() {
                         </button>
                       )
                     )}
-
                     <button
                       disabled={paginaAtual === totalPaginas}
                       onClick={() => setPaginaAtual(paginaAtual + 1)}
@@ -1104,16 +1077,10 @@ export default function GestaoOrcamento() {
                   </div>
                 </td>
               </tr>
-
-
-
-
-
             </table>
           </div>
         </div>)}
       {abaAtiva === "graficos" && (
-
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white shadow-3xl rounded p-4 col-span-1 md:col-span-2">
             <h3 className="text-lg font-semibold mb-2">
@@ -1138,9 +1105,6 @@ export default function GestaoOrcamento() {
                   height={50}
                   tickLine={false}
                 />
-
-
-
                 <YAxis
                   label={{ value: 'Total de Orçamentos', angle: -90, position: 'insideLeft' }}
                 />
@@ -1155,23 +1119,20 @@ export default function GestaoOrcamento() {
                 <Legend />
                 {visibilidade.total && <Line
                   type="monotone"
-                  dataKey={`${anoBase}_OR.Total`} /* Agora funciona */
+                  dataKey={`${anoBase}_OR.Total`} 
                   stroke="#8884d8"
-                  name={`Total OR ${anoBase}`}     /* Agora funciona */
+                  name={`Total OR ${anoBase}`}   
                 >
                   <LabelList dataKey={`${anoBase}_OR.Total`} position="top" />
-                </Line>
-                }
+                </Line>}
                 {visibilidade.anoAnterior && visibilidade.total && <Line
                   type="monotone"
-                  dataKey={`${anoComparacao}_OR.Total`}  /* Agora funciona */
+                  dataKey={`${anoComparacao}_OR.Total`} 
                   stroke="#afadd8ff"
-                  name={`Total OR ${anoComparacao}`}     /* Agora funciona */
+                  name={`Total OR ${anoComparacao}`}
                 >
                   <LabelList dataKey={`${anoComparacao}_OR.Total`} position="top" />
                 </Line>}
-
-                {/* --- BARRAS EMPILHADAS PARA O ANO ATUAL --- */}
                 {visibilidade.convertidos && <Bar
                   dataKey={`${anoBase}_OR.Convertidos`}
                   fill="#22c55e" // Verde forte
@@ -1213,7 +1174,6 @@ export default function GestaoOrcamento() {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-
           <div className="bg-white shadow-3xl rounded p-4 col-span-1 md:col-span-2">
             <h3 className="text-lg font-semibold mb-2">
               Comparação Anual de Conversão de Encomendas (EC)
@@ -1263,7 +1223,6 @@ export default function GestaoOrcamento() {
                   <LabelList dataKey={`${anoComparacao}_EC.Total`} position="top" />
                 </Line>}
 
-                {/* --- BARRAS EMPILHADAS PARA O ANO ATUAL --- */}
                 {visibilidade.convertidos && <Bar
                   dataKey={`${anoBase}_EC.Convertidos`}
                   fill="#22c55e" // Verde forte
@@ -1376,9 +1335,6 @@ export default function GestaoOrcamento() {
               </div>
             </div>
           </div>
-
-
-          {/* Quantidade por situação */}
           <div className="bg-white shadow-3xl rounded p-4">
             <h2 className="font-bold mb-2">Distribuição por Tamanho do Orçamento</h2>
             <ResponsiveContainer width="100%" height={370}>
@@ -1404,9 +1360,6 @@ export default function GestaoOrcamento() {
             </ResponsiveContainer>
 
           </div>
-
-
-
           <div className="bg-white shadow-3xl rounded p-4 col-span-1 md:col-span-2">
             <div className="mb-6 flex justify-center md:justify-start space-x-2">
               <button
