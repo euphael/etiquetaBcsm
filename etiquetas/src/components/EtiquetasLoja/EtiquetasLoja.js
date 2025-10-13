@@ -355,82 +355,77 @@ const EtiquetasLoja = () => {
 
   // Gera etiquetas em PDF para impressão
   const gerarImpressao = () => {
-    // Cria PDF com tamanho padrão (A4 landscape)
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: [80, 80]
-    });
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: [80, 80]
+  });
 
-    const {
-      produto, porcao, caseira, energia100g, energiag, energiaVD, carb100g, carbg, carbVD,
-      acucar100g, acucarg, acucarVD, acucarad100g, acucaradg, acucaradVD,
-      proteina100g, proteinag, proteinaVD, gorduraTotal100g, gorduraTotalg,
-      gorduraTotalVD, gorduraSaturada100g, gorduraSaturadag, gorduraSaturadaVD,
-      gorduraTrans100g, gorduraTransg, gorduraTransVD, fibra100g, fibrag,
-      fibraVD, sodio100g, sodiog, sodioVD, ingredientes, glutem, armazenamento,
-      quantidade, valorQuant, valorTotal, alergenicos, valoresReferencia, lactose,
-      selo_alto_em, transgenico
-    } = itemSelecionado;
+  const {
+    produto, porcao, caseira, energia100g, energiag, energiaVD, carb100g, carbg, carbVD,
+    acucar100g, acucarg, acucarVD, acucarad100g, acucaradg, acucaradVD,
+    proteina100g, proteinag, proteinaVD, gorduraTotal100g, gorduraTotalg,
+    gorduraTotalVD, gorduraSaturada100g, gorduraSaturadag, gorduraSaturadaVD,
+    gorduraTrans100g, gorduraTransg, gorduraTransVD, fibra100g, fibrag,
+    fibraVD, sodio100g, sodiog, sodioVD, ingredientes, glutem, armazenamento,
+    quantidade, valorQuant, valorTotal, alergenicos, valoresReferencia, lactose,
+    selo_alto_em, transgenico
+  } = itemSelecionado;
 
-    for (let copia = 0; copia < quantidadeEtiquetas; copia++) { // Gerar as etiquetas com a quantidade especificada
-      if (copia > 0) doc.addPage();
+  for (let copia = 0; copia < quantidadeEtiquetas; copia++) {
+    if (copia > 0) doc.addPage();
 
-      // Convertendo todos os valores para strings
-      const nomeProduto = String(produto);
+    const nomeProduto = String(produto);
+    const porcaoEh100 = Number(porcao) === 100; // 👈 Verifica se a porção é 100g
 
+    const maxLineWidth = 78;
 
-      const informacoesNutricionais = [
-        { nome: 'Valor energético (kcal)', valor100g: energia100g, valor120g: energiag, VD: energiaVD },
-        { nome: 'Carboidratos (g)', valor100g: carb100g, valor120g: carbg, VD: carbVD },
-        { nome: ' Açúcares totais (g)', valor100g: acucar100g, valor120g: acucarg, VD: acucarVD },
-        { nome: '  Açúcares adicionados (g)', valor100g: acucarad100g, valor120g: acucaradg, VD: acucaradVD },
-        { nome: 'Proteínas (g)', valor100g: proteina100g, valor120g: proteinag, VD: proteinaVD },
-        { nome: 'Gorduras totais (g)', valor100g: gorduraTotal100g, valor120g: gorduraTotalg, VD: gorduraTotalVD },
-        { nome: ' Gorduras saturadas (g)', valor100g: gorduraSaturada100g, valor120g: gorduraSaturadag, VD: gorduraSaturadaVD },
-        { nome: ' Gorduras trans (g)', valor100g: gorduraTrans100g, valor120g: gorduraTransg, VD: gorduraTransVD },
-        { nome: 'Fibras alimentares (g)', valor100g: fibra100g, valor120g: fibrag, VD: fibraVD },
-        { nome: 'Sódio (mg)', valor100g: sodio100g, valor120g: sodiog, VD: sodioVD },
-      ];
+    const wrapText = (text, maxWidth, doc) => {
+      const words = text.split(" ");
+      let line = "";
+      let lines = [];
 
-      const maxLineWidth = 78; // Largura máxima para ingredientes em mm
+      words.forEach(word => {
+        const testLine = line ? line + " " + word : word;
+        const width = doc.getStringUnitWidth(testLine) * doc.internal.getFontSize() / doc.internal.scaleFactor;
 
-      // Função para quebrar o texto automaticamente
-      const wrapText = (text, maxWidth, doc) => {
-        const words = text.split(" ");
-        let line = "";
-        let lines = [];
+        if (width > maxWidth) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = testLine;
+        }
+      });
+      lines.push(line);
+      return lines.join("\n");
+    };
 
-        words.forEach(word => {
-          const testLine = line ? line + " " + word : word;
-          const width = doc.getStringUnitWidth(testLine) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    let y = 5;
+    doc.setFont("helvetica", "normal");
+    y += 8;
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.text("INFORMAÇÃO NUTRICIONAL", 1, y - 2.5);
+    doc.setFont("helvetica", "normal");
 
-          if (width > maxWidth) {
-            lines.push(line);
-            line = word;
-          } else {
-            line = testLine;
-          }
-        });
-        lines.push(line);
-        return lines.join("\n");
-      };
+    // 👇 Mostra a segunda medida só se porção ≠ 100
+    const porcaoTexto = porcaoEh100
+      ? `Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g`
+      : `Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`;
 
-      let y = 5;
-      doc.setFont("helvetica", "normal");
-      y += 8;
-      y += 6;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
-      doc.text("INFORMAÇÃO NUTRICIONAL", 1, y - 2.5)
-      doc.setFont("helvetica", "normal");
-      doc.text(`Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`, 1, y + 0.5);
-      doc.setLineWidth(0.8)
-      doc.line(1.5, y + 2, 78, y + 2)
-      doc.setLineWidth(0.2)
-      const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
-      const textoQuebrado = wrapText(texto, maxLineWidth, doc);
-      doc.text(textoQuebrado, 1, y + 5);
+    doc.text(porcaoTexto, 1, y + 0.5);
+
+    doc.setLineWidth(0.8);
+    doc.line(1.5, y + 2, 78, y + 2);
+    doc.setLineWidth(0.2);
+
+    // 👇 Texto nutricional ajustado
+    const texto = porcaoEh100
+?`Por 100 g (%VD*): Valor energético ${energia100g} kcal (${energiaVD}%), • Carboidratos ${carb100g} g (${carbVD}%), dos quais: Açúcares totais ${acucar100g} g, Açúcares adicionados ${acucarad100g} g (${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibraVD}%) • Sódio ${sodio100g} mg (${sodioVD}%)`
+:`Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%)`
+    const textoQuebrado = wrapText(texto, maxLineWidth, doc);
+    doc.text(textoQuebrado, 1, y + 5);
       doc.line(0.5, y - 5, 79, y - 5)
       doc.line(1.5, y - 2, 78, y - 2)
       doc.line(1.5, y + 20.3, 78, y + 20.3)
@@ -648,6 +643,8 @@ const EtiquetasLoja = () => {
         lines.push(line);
         return lines.join("\n");
       };
+      const porcaoEh100 = Number(porcao) === 100; // 👈 Verifica se a porção é 100g
+
 
       let y = 10
       doc.setFont("helvetica", "normal");
@@ -655,11 +652,17 @@ const EtiquetasLoja = () => {
       doc.setFontSize(7);
       doc.text("INFORMAÇÃO NUTRICIONAL", 1, y - 2.5)
       doc.setFont("helvetica", "normal");
-      doc.text(`Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`, 1, y + 0.5);
+
+      const porcaoTexto = porcaoEh100
+      ? `Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g`
+      : `Porções por embalagem: ${quantidade} • Porção de ${String(porcao)} g (${String(caseira)})`;
+      doc.text(porcaoTexto, 1, y + 0.5);
       doc.setLineWidth(0.8)
       doc.line(1.5, y + 2, 78, y + 2)
       doc.setLineWidth(0.2)
-      const texto = `Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%).`;
+      const texto = porcaoEh100
+      ?`Por 100 g (%VD*): Valor energético ${energia100g} kcal (${energiaVD}%), • Carboidratos ${carb100g} g (${carbVD}%), dos quais: Açúcares totais ${acucar100g} g, Açúcares adicionados ${acucarad100g} g (${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibraVD}%) • Sódio ${sodio100g} mg (${sodioVD}%)`
+      :`Por 100 g (${porcao} g, %VD*): Valor energético ${energia100g} kcal (${energiag} kcal, ${energiaVD}%), • Carboidratos ${carb100g} g (${carbg} g, ${carbVD}%), dos quais: Açúcares totais ${acucar100g} g (${acucarg} g), Açúcares adicionados ${acucarad100g} g (${acucaradg} g, ${acucaradVD}%), • Proteínas ${proteina100g} g (${proteinag} g, ${proteinaVD}%) • Gorduras totais ${gorduraTotal100g} g (${gorduraTotalg} g, ${gorduraTotalVD}%), das quais: Gorduras saturadas ${gorduraSaturada100g} g (${gorduraSaturadag} g, ${gorduraSaturadaVD}%) Gorduras trans ${gorduraTrans100g} g (${gorduraTransg} g, ${gorduraTransVD}%) • Fibras alimentares ${fibra100g} g (${fibrag} g, ${fibraVD}%) • Sódio ${sodio100g} mg (${sodiog} mg, ${sodioVD}%)`
       const textoQuebrado = wrapText(texto, maxLineWidth, doc);
       doc.text(textoQuebrado, 1, y + 5);
       doc.line(0.5, y - 5, 79, y - 5)

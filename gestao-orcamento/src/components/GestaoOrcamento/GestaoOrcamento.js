@@ -14,7 +14,18 @@ import {
   Timer,
   formatarData,
   exportToExcel,
+  PainelControleGrafico,
+  CustomTooltipVendedor,
+  CustomXAxisTick,
+  TooltipCard
 } from "./FuncoesGestaoDeOrcamento.js";
+import {
+  coresCategoria,
+  VENDEDORES_CORPORATIVOS,
+  VENDEDORES_SOCIAIS,
+  VENDEDORES_EC,
+
+} from "./Categorias.js";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, ComposedChart, ReferenceLine,
@@ -49,21 +60,12 @@ export default function GestaoOrcamento() {
   const [tipoVisualizacao, setTipoVisualizacao] = useState('quantidade'); // pode ser 'quantidade' ou 'valor'
   const indexUltimoItem = paginaAtual * itensPorPagina;
   const indexPrimeiroItem = indexUltimoItem - itensPorPagina;
-  // Adicione este estado junto aos outros
   const anoAtual = anoSelecionado;
   const anoAnterior = anoSelecionado - 1;
   const [metricType, setMetricType] = useState('taxa'); // 'taxa' ou 'faturamento'
 
-  // Defina as equipes com os nomes exatos do seu sistema
-  const VENDEDORES_EC = [
-    'Izabela Rodrigues',
-    'Jéssica Dias',
-    'Olívia Junqueira',
-    'Júnia França',
-    'Fabíola Dias'
-  ];
 
-  // Adicione este estado junto com os outros 'useState'
+
   const [visibilidade, setVisibilidade] = useState({
     total: true,
     convertidos: true,
@@ -73,7 +75,6 @@ export default function GestaoOrcamento() {
     anoAnterior: false
   });
 
-  // Adicione esta função para lidar com as mudanças nos checkboxes
   const handleVisibilidadeChange = (event) => {
     const { name, checked } = event.target;
     setVisibilidade(prevState => ({
@@ -83,28 +84,7 @@ export default function GestaoOrcamento() {
   };
 
   // As outras duas listas continuam aqui...
-  const VENDEDORES_SOCIAIS = [
-    'Ana Paula Souza',
-    'Luana Vitória',
-    'Karine Nogueira',
-    'Fernanda Assis',
-    'Patrícia',
-    'Karina Cunha'
-  ];
 
-  const VENDEDORES_CORPORATIVOS = [
-    'Cynthia Mendonça',
-    'Bruna Gusmão',
-    'Rafael Victor',
-    'Ana Paula Rancante'
-  ];
-
-
-  const coresCategoria = {
-    "Convertidos": "#22c55e",
-    "Não Convertidos": "#ef4444",
-    "Em Aberto": "#facc15"
-  };
   const orcamentosFiltrados = orcamentos.filter((o) => {
 
     const vendedorOk = vendedorFiltro ? cleanText(o.IDX_VENDEDOR1).toString() === vendedorFiltro : true;
@@ -199,8 +179,6 @@ export default function GestaoOrcamento() {
       setLoading(false);
     }
   };
-
-
 
 
   const limparFiltros = () => {
@@ -400,88 +378,128 @@ export default function GestaoOrcamento() {
 
 
   const dashboardData = useMemo(() => {
-
-    // A dependência agora inclui 'metricType'
     if (!orcamentos || orcamentos.length === 0) {
-      // Retorna um estado inicial zerado
       const zeroState = { valor: 0, formatado: metricType === 'taxa' ? '0.00%' : 'R$ 0,00' };
       return {
-        total: zeroState, ec: zeroState, social: zeroState, corporativo: zeroState,
-        vendedoresEC: [], vendedoresSocial: [], vendedoresCorporativo: [],
+        total: zeroState,
+        ec: zeroState,
+        social: zeroState,
+        corporativo: zeroState,
+        vendedoresEC: [],
+        vendedoresSocial: [],
+        vendedoresCorporativo: [],
         metricInfo: {
           titlePrefix: metricType === 'taxa' ? 'Conversão' : 'Faturamento',
-          formatter: (value) => (metricType === 'taxa' ? `${value.toFixed(2)}%` : `R$ ${value.toLocaleString('pt-BR')}`)
+          formatter: (value) =>
+            metricType === 'taxa'
+              ? `${value.toFixed(2)}%`
+              : `R$ ${value.toLocaleString('pt-BR')}`
         }
       };
     }
 
     const isConvertido = (situacao) => ["Z", "F", "B", "V"].includes(situacao);
 
-    // Função HELPER que calcula AMBAS as métricas para uma lista de orçamentos
-    const getPerformance = (listaOrcamentos) => {
-      const totalOrcamentos = listaOrcamentos.length;
-      const orcamentosConvertidos = listaOrcamentos.filter(o => isConvertido(o.SITUACAO));
-      const totalConvertidos = orcamentosConvertidos.length;
-
-      // Calcula a taxa
-      const taxa = totalOrcamentos > 0 ? (totalConvertidos / totalOrcamentos) * 100 : 0;
-
-      // Calcula o faturamento (soma dos VALORTOTAL dos convertidos)
-      const faturamento = orcamentosConvertidos.reduce((acc, orc) => acc + (orc.AJUSTE_TOTAL || 0), 0);
-
+    // 📊 Calcula taxa e faturamento geral
+    const getPerformance = (lista) => {
+      const total = lista.length;
+      const convertidos = lista.filter(o => isConvertido(o.SITUACAO));
+      const totalConv = convertidos.length;
+      const taxa = total > 0 ? (totalConv / total) * 100 : 0;
+      const faturamento = convertidos.reduce((acc, o) => acc + (o.AJUSTE_TOTAL || 0), 0);
       return { taxa, faturamento };
     };
 
-    // Função HELPER para performance de vendedores
-    const getVendedorPerformance = (listaOrcamentos) => {
-      if (!listaOrcamentos.length) return [];
+    // 👥 Performance por vendedor (com OR e EC separados)
+    const getVendedorPerformance = (lista) => {
+      if (!lista.length) return [];
 
-      const vendedorStats = listaOrcamentos.reduce((acc, orc) => {
-        const vendedor = cleanText(orc.NOMEINTERNO) || "Sem Vendedor";
+      const stats = lista.reduce((acc, o) => {
+        const vendedor = cleanText(o.NOMEINTERNO) || "Sem Vendedor";
         if (!acc[vendedor]) {
-          acc[vendedor] = { totalCount: 0, convertedCount: 0, faturamento: 0 };
+          acc[vendedor] = {
+            totalCount: 0,
+            convertedCount: 0,
+            faturamento: 0,
+            OR: { total: 0, convertidos: 0, faturamento: 0 },
+            EC: { total: 0, convertidos: 0, faturamento: 0 }
+          };
         }
+
         acc[vendedor].totalCount++;
-        if (isConvertido(orc.SITUACAO)) {
-          acc[vendedor].convertedCount++;
-          acc[vendedor].faturamento += (orc.AJUSTE_TOTAL || 0);
+
+        const isConv = isConvertido(o.SITUACAO);
+        const valor = o.AJUSTE_TOTAL || 0;
+
+        if (o.TPDOCTO === "OR") {
+          acc[vendedor].OR.total++;
+          if (isConv) {
+            acc[vendedor].OR.convertidos++;
+            acc[vendedor].OR.faturamento += valor;
+          }
+        } else if (o.TPDOCTO === "EC") {
+          acc[vendedor].EC.total++;
+          if (isConv) {
+            acc[vendedor].EC.convertidos++;
+            acc[vendedor].EC.faturamento += valor;
+          }
         }
+
+        if (isConv) {
+          acc[vendedor].convertedCount++;
+          acc[vendedor].faturamento += valor;
+        }
+
         return acc;
       }, {});
 
-      return Object.entries(vendedorStats).map(([nome, dados]) => {
-        const taxaCalculada = dados.totalCount > 0 ? parseFloat(((dados.convertedCount / dados.totalCount) * 100).toFixed(2)) : 0;
+      return Object.entries(stats)
+        .map(([nome, dados]) => {
+          const taxa = dados.totalCount > 0
+            ? parseFloat(((dados.convertedCount / dados.totalCount) * 100).toFixed(2))
+            : 0;
 
-        return {
-          name: nome,
-          // O valor do gráfico será a taxa ou o faturamento, dependendo da métrica ativa
-          value: metricType === 'taxa' ? taxaCalculada : dados.faturamento,
-        };
-      }).sort((a, b) => b.value - a.value);
+          return {
+            name: nome,
+            value: metricType === 'taxa' ? taxa : dados.faturamento,
+            detalhe: {
+              OR: dados.OR,
+              EC: dados.EC
+            },
+            metricType
+          };
+        })
+        .sort((a, b) => b.value - a.value);
     };
 
-    // --- Cálculos por Segmento ---
-    const orcamentosSociais = orcamentos.filter(o => VENDEDORES_SOCIAIS.includes(cleanText(o.NOMEINTERNO)));
-    const orcamentosCorporativos = orcamentos.filter(o => VENDEDORES_CORPORATIVOS.includes(cleanText(o.NOMEINTERNO)));
+    // --- Segmentos ---
+    const orcamentosSociais = orcamentos.filter(o =>
+      VENDEDORES_SOCIAIS.includes(cleanText(o.NOMEINTERNO))
+    );
+    const orcamentosCorporativos = orcamentos.filter(o =>
+      VENDEDORES_CORPORATIVOS.includes(cleanText(o.NOMEINTERNO))
+    );
     const orcamentosEC = orcamentos.filter(o => o.TPDOCTO === 'EC');
-    const orcamentosECFiltradosPorEquipe = orcamentos.filter(o => o.TPDOCTO === 'EC' && VENDEDORES_EC.includes(cleanText(o.NOMEINTERNO)));
+    const orcamentosECEquipe = orcamentos.filter(
+      o => o.TPDOCTO === 'EC' && VENDEDORES_EC.includes(cleanText(o.NOMEINTERNO))
+    );
 
     const perfTotal = getPerformance(orcamentos);
     const perfEC = getPerformance(orcamentosEC);
     const perfSocial = getPerformance(orcamentosSociais);
     const perfCorporativo = getPerformance(orcamentosCorporativos);
 
-    // --- Função para formatar a saída ---
-    const formatValue = (value) => {
-      if (metricType === 'taxa') {
-        return `${value.toFixed(2)}%`;
-      }
-      return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    };
+    const formatValue = (value) =>
+      metricType === 'taxa'
+        ? `${value.toFixed(2)}%`
+        : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     const metricInfo = {
       titlePrefix: metricType === 'taxa' ? 'Conversão' : 'Faturamento',
-      formatter: (value) => (metricType === 'taxa' ? `${value}%` : value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }))
+      formatter: (value) =>
+        metricType === 'taxa'
+          ? `${value}%`
+          : value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
     };
 
     return {
@@ -489,12 +507,17 @@ export default function GestaoOrcamento() {
       ec: { valor: perfEC[metricType], formatado: formatValue(perfEC[metricType]) },
       social: { valor: perfSocial[metricType], formatado: formatValue(perfSocial[metricType]) },
       corporativo: { valor: perfCorporativo[metricType], formatado: formatValue(perfCorporativo[metricType]) },
-      vendedoresEC: getVendedorPerformance(orcamentosECFiltradosPorEquipe),
+      vendedoresEC: getVendedorPerformance(orcamentosECEquipe),
       vendedoresSocial: getVendedorPerformance(orcamentosSociais),
       vendedoresCorporativo: getVendedorPerformance(orcamentosCorporativos),
-      metricInfo, // Passa informações sobre a métrica para o JSX
+      metricInfo,
     };
-  }, [orcamentos, metricType]); // <-- Dependência dupla!
+  }, [orcamentos, metricType]);
+
+
+
+
+
 
 
   const alturaBasePorVendedor = 40;
@@ -547,107 +570,8 @@ export default function GestaoOrcamento() {
   }, [orcamentos, tipoVisualizacao]); // Adiciona 'tipoVisualizacao' como dependência
 
   // Componente para o painel de controle com os checkboxes
-  function PainelControleGrafico({ visibilidade, onChange }) {
-    return (
-      <div className="flex flex-wrap justify-center items-center gap-4 p-2 mb-4 bg-gray-100 rounded-lg">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            name="anoAnterior"
-            checked={visibilidade.anoAnterior}
-            onChange={onChange}
-            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-          />
-          Ano Anterior
-        </label>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            name="total"
-            checked={visibilidade.total}
-            onChange={onChange}
-            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-          />
-          Total
-        </label>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            name="convertidos"
-            checked={visibilidade.convertidos}
-            onChange={onChange}
-            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-          />
-          Convertidos
-        </label>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            name="naoConvertidos"
-            checked={visibilidade.naoConvertidos}
-            onChange={onChange}
-            className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-          />
-          Não Convertidos
-        </label>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            name="taxaConversao"
-            checked={visibilidade.taxaConversao}
-            onChange={onChange}
-            className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-          />
-          Taxa de Conversão
-        </label>
-      </div>
-    );
-  }
-  // Componente para renderizar o tick do Eixo X com duas linhas
-  const CustomXAxisTick = ({ x, y, payload, anoPrincipal, dados, tipo }) => {
-    if (!payload || !payload.value) return null;
 
-    // Busca o registro completo do mês
-    const dadosDoMes = dados.find(d => d.name === payload.value);
-    if (!dadosDoMes) return null;
-
-    let taxa = 0;
-
-    if (anoPrincipal && dadosDoMes) {
-      const total = dadosDoMes[`${anoPrincipal}_${tipo}.Total`] || 0;
-      const convertidos = dadosDoMes[`${anoPrincipal}_${tipo}.Convertidos`] || 0;
-      if (total > 0) {
-        taxa = (convertidos / total) * 100;
-      }
-    }
-
-    return (
-      <g transform={`translate(${x},${y})`}>
-        <text
-          x={0}
-          y={0}
-          dy={16}
-          textAnchor="middle"
-          fill="#666"
-          fontSize={14}
-        >
-          {payload.value}
-        </text>
-
-        <text
-          x={0}
-          y={15}
-          dy={16}
-          textAnchor="middle"
-          fill={tipo === "OR" ? "#ff7300" : "#ff7300"} // Azul p/ OR, Verde p/ EC
-          fontSize={12}
-          fontWeight="bold"
-        >
-          {`${taxa.toFixed(1)}%`}
-        </text>
-      </g>
-    );
-  };
+  // Componente para renderizar o tick do Eixo X com duas linh
 
 
 
@@ -1119,15 +1043,15 @@ export default function GestaoOrcamento() {
                 <Legend />
                 {visibilidade.total && <Line
                   type="monotone"
-                  dataKey={`${anoBase}_OR.Total`} 
+                  dataKey={`${anoBase}_OR.Total`}
                   stroke="#8884d8"
-                  name={`Total OR ${anoBase}`}   
+                  name={`Total OR ${anoBase}`}
                 >
                   <LabelList dataKey={`${anoBase}_OR.Total`} position="top" />
                 </Line>}
                 {visibilidade.anoAnterior && visibilidade.total && <Line
                   type="monotone"
-                  dataKey={`${anoComparacao}_OR.Total`} 
+                  dataKey={`${anoComparacao}_OR.Total`}
                   stroke="#afadd8ff"
                   name={`Total OR ${anoComparacao}`}
                 >
@@ -1135,12 +1059,12 @@ export default function GestaoOrcamento() {
                 </Line>}
                 {visibilidade.convertidos && <Bar
                   dataKey={`${anoBase}_OR.Convertidos`}
-                  fill="#22c55e" // Verde forte
+                  fill="#3b82f6" // Verde forte
                   name={`Convertidos ${anoBase}`}
                 />}
                 {visibilidade.anoAnterior && visibilidade.convertidos && <Bar
                   dataKey={`${anoComparacao}_OR.Convertidos`}
-                  fill="#86efadff" // Verde claro
+                  fill="#9bbdf5ff" // Verde claro
                   name={`Convertidos ${anoComparacao}`}
                 />}
                 {visibilidade.naoConvertidos && <Bar
@@ -1243,14 +1167,6 @@ export default function GestaoOrcamento() {
                   fill="#fca5a5" // Vermelho claro
                   name={`Não Convertidos ${anoComparacao}`}
                 />}
-                {visibilidade.anoAnterior && visibilidade.taxaConversao && <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey={`${anoComparacao}_EC.TaxaConversao`}
-                  stroke="#fcc87bff" // Cinza
-                  strokeWidth={2}
-                  name={`Taxa Conversão ${anoComparacao} (%)`}
-                />}
                 {visibilidade.taxaConversao && <Line
                   yAxisId="right"
                   type="monotone"
@@ -1258,6 +1174,14 @@ export default function GestaoOrcamento() {
                   stroke="#ff7300" // Laranja
                   strokeWidth={2}
                   name={`Taxa Conversão ${anoBase} (%)`}
+                />}
+                {visibilidade.anoAnterior && visibilidade.taxaConversao && <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey={`${anoComparacao}_EC.TaxaConversao`}
+                  stroke="#fcc87bff" // Cinza
+                  strokeWidth={2}
+                  name={`Taxa Conversão ${anoComparacao} (%)`}
                 />}
               </ComposedChart>
             </ResponsiveContainer>
@@ -1320,7 +1244,7 @@ export default function GestaoOrcamento() {
                       label={({ value }) => tipoVisualizacao === 'valor' ? `R$ ${(value / 1000).toFixed(0)}k` : value}
                     >
                       {pieData.OR.map((entry, index) => (
-                        <Cell key={`or-cell-${index}`} fill={coresCategoria[entry.name]} />
+                        <Cell key={`or-cell-${index}`} fill={entry.name === 'Convertidos' ? '#3b82f6' : '#ef4444'} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value) => tipoVisualizacao === 'valor' ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : value} />
@@ -1436,7 +1360,7 @@ export default function GestaoOrcamento() {
                   <BarChart
                     data={dashboardData.vendedoresEC}
                     layout="vertical"
-                    margin={{ top: 5, right: 35, left: 30, bottom: 5 }}
+                    margin={{ top: 5, right: 60, left: 30, bottom: 5 }} // 👈 Aumente aqui
                   >
                     <XAxis type="number" hide />
                     <YAxis
@@ -1447,19 +1371,10 @@ export default function GestaoOrcamento() {
                       axisLine={false}
                       tickLine={false}
                     />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(229, 231, 235, 0.5)' }}
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '0.75rem',
-                      }}
-                      formatter={(value) =>
-                        metricType === 'taxa'
-                          ? `${value}%`
-                          : `R$ ${value.toLocaleString('pt-BR')}`
-                      }
-                    />
+
+                    {/* Tooltip customizado (fora do <Bar>) */}
+                    <Tooltip content={<CustomTooltipVendedor />} cursor={{ fill: 'rgba(229, 231, 235, 0.5)' }} />
+
                     <Bar
                       dataKey="value"
                       fill="#10b981"
@@ -1491,7 +1406,7 @@ export default function GestaoOrcamento() {
                   <BarChart
                     data={dashboardData.vendedoresSocial}
                     layout="vertical"
-                    margin={{ top: 5, right: 35, left: 30, bottom: 5 }}
+                    margin={{ top: 5, right: 60, left: 30, bottom: 5 }} // 👈 Aumente aqui
                   >
                     <XAxis type="number" hide />
                     <YAxis
@@ -1502,19 +1417,9 @@ export default function GestaoOrcamento() {
                       axisLine={false}
                       tickLine={false}
                     />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(229, 231, 235, 0.5)' }}
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '0.75rem',
-                      }}
-                      formatter={(value) =>
-                        metricType === 'taxa'
-                          ? `${value}%`
-                          : `R$ ${value.toLocaleString('pt-BR')}`
-                      }
-                    />
+
+                    <Tooltip content={<CustomTooltipVendedor />} cursor={{ fill: 'rgba(229, 231, 235, 0.5)' }} />
+
                     <Bar
                       dataKey="value"
                       fill="#3b82f6"
@@ -1546,7 +1451,7 @@ export default function GestaoOrcamento() {
                   <BarChart
                     data={dashboardData.vendedoresCorporativo}
                     layout="vertical"
-                    margin={{ top: 5, right: 35, left: 30, bottom: 5 }}
+                    margin={{ top: 5, right: 60, left: 30, bottom: 5 }} // 👈 Aumente aqui
                   >
                     <XAxis type="number" hide />
                     <YAxis
@@ -1557,19 +1462,9 @@ export default function GestaoOrcamento() {
                       axisLine={false}
                       tickLine={false}
                     />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(229, 231, 235, 0.5)' }}
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '0.75rem',
-                      }}
-                      formatter={(value) =>
-                        metricType === 'taxa'
-                          ? `${value}%`
-                          : `R$ ${value.toLocaleString('pt-BR')}`
-                      }
-                    />
+
+                    <Tooltip content={<CustomTooltipVendedor />} cursor={{ fill: 'rgba(229, 231, 235, 0.5)' }} />
+
                     <Bar
                       dataKey="value"
                       fill="#8b5cf6"
@@ -1578,7 +1473,7 @@ export default function GestaoOrcamento() {
                     >
                       <LabelList
                         dataKey="value"
-                        position="right"
+                        position="right" // 👈 ou "right" se preferir sempre fora
                         formatter={(value) =>
                           metricType === 'taxa'
                             ? `${value}%`
@@ -1592,6 +1487,7 @@ export default function GestaoOrcamento() {
                 </ResponsiveContainer>
               </div>
             </div>
+
           </div>
         </div>)
       }

@@ -3,9 +3,62 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 
-
-// Função para gerar botões com reticências
-
+function PainelControleGrafico({ visibilidade, onChange }) {
+    return (
+        <div className="flex flex-wrap justify-center items-center gap-4 p-2 mb-4 bg-gray-100 rounded-lg">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                    type="checkbox"
+                    name="anoAnterior"
+                    checked={visibilidade.anoAnterior}
+                    onChange={onChange}
+                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                Ano Anterior
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                    type="checkbox"
+                    name="total"
+                    checked={visibilidade.total}
+                    onChange={onChange}
+                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                Total
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                    type="checkbox"
+                    name="convertidos"
+                    checked={visibilidade.convertidos}
+                    onChange={onChange}
+                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                Convertidos
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                    type="checkbox"
+                    name="naoConvertidos"
+                    checked={visibilidade.naoConvertidos}
+                    onChange={onChange}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                Não Convertidos
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                    type="checkbox"
+                    name="taxaConversao"
+                    checked={visibilidade.taxaConversao}
+                    onChange={onChange}
+                    className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                />
+                Taxa de Conversão
+            </label>
+        </div>
+    );
+}
 
 function corTempo(situacao, dt) {
     const agora = new Date();
@@ -111,14 +164,10 @@ function nomeSituacao(situacao) {
     }
 }
 
-
-
-
 const valorPorPessoa = (orc) => {
     if (!orc.CONVIDADOS || orc.CONVIDADOS === 0) return 0;
     return orc.AJUSTE_TOTAL / orc.CONVIDADOS;
 };
-
 
 function diferencaEntreDatas(dt1, dt2) {
     const inclusao = new Date(dt1);
@@ -162,63 +211,168 @@ function Timer({ dt }) {
     return <span>{tempo}</span>;
 }
 const EventoDropdown = ({ evento }) => {
-  const [aberto, setAberto] = useState(false);
+    const [aberto, setAberto] = useState(false);
+
+    return (
+        <div className="border-b border-gray-300">
+            {/* Linha clicável */}
+            <div
+                className="cursor-pointer flex justify-between items-center p-3 hover:bg-gray-100"
+                onClick={() => setAberto(!aberto)}
+            >
+                <span>{evento.nome}</span>
+                <span>{aberto ? "▲" : "▼"}</span>
+            </div>
+
+            {/* Dropdown (mostra detalhes do evento) */}
+            {aberto && (
+                <div className="bg-gray-50 p-4 text-sm text-gray-700">
+                    <p><strong>Data:</strong> {evento.data}</p>
+                    <p><strong>Local:</strong> {evento.local}</p>
+                    <p><strong>Descrição:</strong> {evento.descricao}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+function formatarData(dt) {
+    const data = new Date(dt);
+    const dia = String(data.getDate()).padStart(2, "0");
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const ano = data.getFullYear();
+
+    return `${dia}/${mes}/${ano}`;
+}
+function exportToExcel(dados, nomeArquivo = "planejamento.xlsx") {
+    // Cria worksheet a partir dos dados
+    const ws = XLSX.utils.json_to_sheet(dados);
+
+    // Cria workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orçamentos");
+
+    // Gera buffer e salva arquivo
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, nomeArquivo);
+}
+
+const CustomTooltipVendedor = ({ active, payload }) => {
+  if (!active || !payload || !payload.length) return null;
+
+  const item = payload[0].payload;
+  const { name, detalhe, metricType } = item;
+
+  const totalOR = detalhe?.OR?.total || 0;
+  const convOR = detalhe?.OR?.convertidos || 0;
+  const faturamentoOR = detalhe?.OR?.faturamento || 0;
+
+  const totalEC = detalhe?.EC?.total || 0;
+  const convEC = detalhe?.EC?.convertidos || 0;
+  const faturamentoEC = detalhe?.EC?.faturamento || 0;
+
+  const formatPercent = (value) => `${value.toFixed(1)}%`;
+  const formatCurrency = (value) =>
+    value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const taxaOR = totalOR > 0 ? (convOR / totalOR) * 100 : 0;
+  const taxaEC = totalEC > 0 ? (convEC / totalEC) * 100 : 0;
 
   return (
-    <div className="border-b border-gray-300">
-      {/* Linha clicável */}
-      <div
-        className="cursor-pointer flex justify-between items-center p-3 hover:bg-gray-100"
-        onClick={() => setAberto(!aberto)}
-      >
-        <span>{evento.nome}</span>
-        <span>{aberto ? "▲" : "▼"}</span>
-      </div>
+    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg text-sm">
+      <strong className="block text-gray-800 mb-2">{name}</strong>
 
-      {/* Dropdown (mostra detalhes do evento) */}
-      {aberto && (
-        <div className="bg-gray-50 p-4 text-sm text-gray-700">
-          <p><strong>Data:</strong> {evento.data}</p>
-          <p><strong>Local:</strong> {evento.local}</p>
-          <p><strong>Descrição:</strong> {evento.descricao}</p>
-        </div>
+      {metricType === "taxa" ? (
+        <>
+          <div className="flex justify-between gap-4 mb-1">
+            <span className="text-blue-600 font-medium">🧾 OR</span>
+            <span className="text-gray-600">
+              {convOR}/{totalOR} • {formatPercent(taxaOR)}
+            </span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-green-600 font-medium">📦 EC</span>
+            <span className="text-gray-600">
+              {convEC}/{totalEC} • {formatPercent(taxaEC)}
+            </span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex justify-between gap-4 mb-1">
+            <span className="text-blue-600 font-medium">🧾 Faturamento OR</span>
+            <span className="text-gray-600">{formatCurrency(faturamentoOR)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-green-600 font-medium">📦 Faturamento EC</span>
+            <span className="text-gray-600">{formatCurrency(faturamentoEC)}</span>
+          </div>
+        </>
       )}
     </div>
   );
 };
-function formatarData(dt) {
-  const data = new Date(dt);
-  const dia = String(data.getDate()).padStart(2, "0");
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const ano = data.getFullYear();
 
-  return `${dia}/${mes}/${ano}`;
-}
-function exportToExcel(dados, nomeArquivo = "planejamento.xlsx") {
-  // Cria worksheet a partir dos dados
-  const ws = XLSX.utils.json_to_sheet(dados);
+const CustomXAxisTick = ({ x, y, payload, anoPrincipal, dados, tipo }) => {
+    if (!payload || !payload.value) return null;
 
-  // Cria workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Orçamentos");
+    // Busca o registro completo do mês
+    const dadosDoMes = dados.find(d => d.name === payload.value);
+    if (!dadosDoMes) return null;
 
-  // Gera buffer e salva arquivo
-  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(data, nomeArquivo);
-}
+    let taxa = 0;
+
+    if (anoPrincipal && dadosDoMes) {
+        const total = dadosDoMes[`${anoPrincipal}_${tipo}.Total`] || 0;
+        const convertidos = dadosDoMes[`${anoPrincipal}_${tipo}.Convertidos`] || 0;
+        if (total > 0) {
+            taxa = (convertidos / total) * 100;
+        }
+    }
+
+    return (
+        <g transform={`translate(${x},${y})`}>
+            <text
+                x={0}
+                y={0}
+                dy={16}
+                textAnchor="middle"
+                fill="#666"
+                fontSize={14}
+            >
+                {payload.value}
+            </text>
+
+            <text
+                x={0}
+                y={15}
+                dy={16}
+                textAnchor="middle"
+                fill={tipo === "OR" ? "#ff7300" : "#ff7300"} // Azul p/ OR, Verde p/ EC
+                fontSize={12}
+                fontWeight="bold"
+            >
+                {`${taxa.toFixed(1)}%`}
+            </text>
+        </g>
+    );
+};
 
 export {
-  corTempo,
-  taxaConversao,
-  cleanText,
-  diferencaMediaEntreDatas,
-  mediaTempoFechamento,
-  corSituacao,
-  nomeSituacao,
-  valorPorPessoa,
-  diferencaEntreDatas,
-  Timer,
-  EventoDropdown,
-  formatarData,
-  exportToExcel};
+    corTempo,
+    taxaConversao,
+    cleanText,
+    diferencaMediaEntreDatas,
+    mediaTempoFechamento,
+    corSituacao,
+    nomeSituacao,
+    valorPorPessoa,
+    diferencaEntreDatas,
+    Timer,
+    EventoDropdown,
+    formatarData,
+    exportToExcel,
+    PainelControleGrafico,
+    CustomXAxisTick,
+    CustomTooltipVendedor
+};
